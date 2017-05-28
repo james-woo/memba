@@ -7,7 +7,6 @@ import com.james.memba.model.source.BerryDataSource;
 import com.james.memba.model.source.BerryRepository;
 import com.james.memba.utils.EspressoIdlingResource;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;

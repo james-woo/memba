@@ -44,4 +44,6 @@
             android:text="You have no Berries!" />
     </LinearLayout>
 
+    <include layout="@layout/nav_bar"/>
+
 </RelativeLayout>

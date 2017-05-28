@@ -1,10 +1,8 @@
 package com.james.memba.home;
 
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.net.Uri;
+import android.content.res.Resources;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -14,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -22,12 +21,7 @@ import android.widget.TextView;
 import com.james.memba.R;
 import com.james.memba.model.Berry;
 
-import org.w3c.dom.Text;
-
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -39,14 +33,15 @@ public class HomeFragment extends Fragment implements HomeContract.View {
     private HomeContract.Presenter mPresenter;
 
     private BerryAdapter mListAdapter;
-
     private View mNoBerriesView;
-
     private ImageView mNoBerryIcon;
-
     private TextView mNoBerryMainView;
-
     private LinearLayout mBerriesView;
+
+    // Navbar
+    private ImageButton mHomeButton;
+    private ImageButton mAddButton;
+    private ImageButton mMapButton;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -93,6 +88,13 @@ public class HomeFragment extends Fragment implements HomeContract.View {
         mNoBerriesView = root.findViewById(R.id.noBerries);
         mNoBerryIcon = (ImageView) root.findViewById(R.id.noBerriesIcon);
         mNoBerryMainView = (TextView) root.findViewById(R.id.noBerriesMain);
+
+        mHomeButton = (ImageButton) root.findViewById(R.id.home_button);
+        mHomeButton.setImageDrawable(getResources().getDrawable(R.drawable.home_selected, null));
+        mAddButton = (ImageButton) root.findViewById(R.id.add_button);
+        mAddButton.setImageDrawable(getResources().getDrawable(R.drawable.add_unselected, null));
+        mMapButton = (ImageButton) root.findViewById(R.id.map_button);
+        mMapButton.setImageDrawable(getResources().getDrawable(R.drawable.map_unselected, null));
 
         mPresenter.loadBerries(true);
 
