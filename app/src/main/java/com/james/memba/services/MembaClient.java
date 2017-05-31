@@ -14,13 +14,18 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import okhttp3.Authenticator;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.Route;
 
 public class MembaClient {
-    private final String mBaseUrl = "https://membame.herokuapp.com/api/";
+    //private final String mBaseUrl = "https://membame.herokuapp.com/api/";
+    private final String mBaseUrl = "http://10.0.2.2:8080/api/";
 
     private OkHttpClient mHttpClient;
 
@@ -36,33 +41,40 @@ public class MembaClient {
         }).build();
     }
 
-    public ArrayList<Berry> getBerries(Account account) {
-        ArrayList<Berry> berries = new ArrayList<>();
+    public void getAccount(String id, Callback cb) {
+        Request request = new Request.Builder()
+                .url(mBaseUrl + "users/" + id)
+                .get()
+                .build();
 
+        mHttpClient.newCall(request).enqueue(cb);
+    }
+
+    public void createAccount(String id) {
+        String postBody = "{\"userId\":" + id + ", \"berries\":\"[]\"}";
         try {
             Request request = new Request.Builder()
-                    //.url(mBaseUrl + "users/" + account.getUserId() + "/berries")
-                    .url(mBaseUrl + "users/123456789/berries")
+                    .url(mBaseUrl + "users/")
+                    .post(RequestBody.create(MediaType.parse("application/json"), postBody))
                     .build();
-            Response responses = null;
 
-            try {
-                responses = mHttpClient.newCall(request).execute();
+            Response response = mHttpClient.newCall(request).execute();
+            if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            String data = responses.body().string();
-            JSONArray jArray = new JSONArray(data);
-            for (int i = 0; i < jArray.length(); i++) {
-                berries.add(JSONToBerry(jArray.getJSONObject(i)));
-            }
+            System.out.println(response.body().string());
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
 
-        return berries;
+    public void getBerries(Account account, Callback cb) {
+        Request request = new Request.Builder()
+                //.url(mBaseUrl + "users/" + account.getUserId() + "/berries")
+                .url(mBaseUrl + "users/123456789/berries")
+                .get()
+                .build();
+
+        mHttpClient.newCall(request).enqueue(cb);
     }
 
     public Berry getBerry(String berryId) {
@@ -71,6 +83,7 @@ public class MembaClient {
         try {
             Request request = new Request.Builder()
                     .url(mBaseUrl + "berry/" + berryId)
+                    .get()
                     .build();
             Response responses = null;
 
@@ -93,8 +106,9 @@ public class MembaClient {
         return berry;
     }
 
-    private Berry JSONToBerry(JSONObject object) {
+    public Berry JSONToBerry(JSONObject object) {
         Berry berry = null;
+
         try {
             String id = object.getString("_id");
             String user = object.getString("userId");

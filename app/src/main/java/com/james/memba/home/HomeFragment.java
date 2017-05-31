@@ -1,5 +1,6 @@
 package com.james.memba.home;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -29,15 +30,14 @@ public class HomeFragment extends Fragment {
 
     private ArrayList<Berry> mBerries;
 
+    private OnHomeLoadedListener mHomeLoadedListener;
+
     public HomeFragment() {
         // Required empty public constructor
     }
 
-    public static HomeFragment newInstance(ArrayList<Berry> berries) {
+    public static HomeFragment newInstance() {
         HomeFragment fragment = new HomeFragment();
-        Bundle args = new Bundle();
-        args.putSerializable(HOME_BERRIES_LIST, berries);
-        fragment.setArguments(args);
         return fragment;
     }
 
@@ -45,11 +45,7 @@ public class HomeFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mListAdapter = new BerryAdapter(new ArrayList<Berry>(0));
-
-        if (getArguments() != null) {
-            mBerries = (ArrayList<Berry>) getArguments().getSerializable(HOME_BERRIES_LIST);
-        }
+        mListAdapter = new BerryAdapter(new ArrayList<Berry>(0), getContext());
     }
 
     @Nullable
@@ -67,11 +63,7 @@ public class HomeFragment extends Fragment {
         mNoBerryIcon = (ImageView) root.findViewById(R.id.noBerriesIcon);
         mNoBerryMainView = (TextView) root.findViewById(R.id.noBerriesMain);
 
-        if (mBerries.isEmpty()) {
-            showNoBerries();
-        } else {
-            showBerries(mBerries);
-        }
+        homeLoaded();
 
         return root;
     }
@@ -93,7 +85,34 @@ public class HomeFragment extends Fragment {
         mNoBerriesView.setVisibility(View.VISIBLE);
     }
 
+    public void homeLoaded() {
+        if (mHomeLoadedListener != null) {
+            mHomeLoadedListener.onHomeLoaded();
+        }
+    }
+
     public boolean isActive() {
         return isAdded();
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof OnHomeLoadedListener) {
+            mHomeLoadedListener = (OnHomeLoadedListener) context;
+        } else {
+            throw new RuntimeException(context.toString()
+                    + " must implement OnHomeLoadedListener");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mHomeLoadedListener = null;
+    }
+
+    public interface OnHomeLoadedListener {
+        void onHomeLoaded();
     }
 }

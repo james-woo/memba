@@ -1,5 +1,6 @@
 package com.james.memba.home;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
@@ -11,6 +12,7 @@ import android.widget.TextView;
 
 import com.james.memba.R;
 import com.james.memba.model.Berry;
+import com.squareup.picasso.Picasso;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -20,9 +22,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class BerryAdapter extends BaseAdapter {
     private List<Berry> mBerries;
+    private Context mContext;
 
-    public BerryAdapter(List<Berry> berries) {
+    public BerryAdapter(List<Berry> berries, Context context) {
         setList(berries);
+        mContext = context;
     }
 
     public void replaceData(List<Berry> berries) {
@@ -65,19 +69,8 @@ public class BerryAdapter extends BaseAdapter {
         TextView locationTV = (TextView) rowView.findViewById(R.id.location);
         locationTV.setText(berry.getLocation().toString());
 
-        URL url = null;
-        Bitmap img = null;
-        try {
-            url = new URL(berry.getImage());
-            img = BitmapFactory.decodeStream(url.openConnection().getInputStream());
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (java.io.IOException e) {
-            e.printStackTrace();
-        }
-
         ImageView image = (ImageView) rowView.findViewById(R.id.image);
-        image.setImageBitmap(img);
+        Picasso.with(mContext).load(berry.getImage()).into(image);
 
         TextView descriptionTV = (TextView) rowView.findViewById(R.id.description);
         descriptionTV.setText(berry.getDescription());
@@ -87,4 +80,6 @@ public class BerryAdapter extends BaseAdapter {
 
         return rowView;
     }
+
+
 }

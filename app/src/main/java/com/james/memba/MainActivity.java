@@ -12,27 +12,108 @@ import android.widget.Toast;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.james.memba.addberry.AddBerryFragment;
 import com.james.memba.home.HomeFragment;
 import com.james.memba.model.Account;
 import com.james.memba.model.Berry;
 import com.james.memba.services.MembaClient;
 import com.james.memba.utils.ActivityUtils;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
+
+public class MainActivity extends AppCompatActivity implements HomeFragment.OnHomeLoadedListener{
 
     private String mClientId;
     private GoogleApiClient mGoogleApiClient;
+
+    // Fragments
+    private HomeFragment mHomeFragment;
+    private AddBerryFragment mAddBerryFragment;
 
     // Navbar
     private ImageButton mHomeButton;
     private ImageButton mAddButton;
     private ImageButton mMapButton;
+    private enum Navbar {HOME, ADD, MAP}
 
     private MembaClient mMembaClient;
 
     private Account mAccount;
+
+    private ArrayList<Berry> mHomeBerries;
+
+    private Callback mGetAccountCB = new Callback() {
+        @Override
+        public void onFailure(final Call call, IOException e) {
+            // Error
+        }
+
+        @Override
+        public void onResponse(Call call, final Response response) throws java.io.IOException {
+            String data = response.body().string();
+
+            try {
+                if (response.isSuccessful()) {
+                    // Retrieve account information
+                    JSONObject object = new JSONObject(data);
+                    mAccount = new Account(object.getString("userId"));
+                    mMembaClient.getBerries(mAccount, mGetBerriesCB);
+                } else {
+                    // Create new account
+                    JSONObject object = new JSONObject(data);
+                    mAccount = new Account(object.getString("userId"));
+                    mMembaClient.createAccount(mAccount.getUserId());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    };
+
+    private Callback mGetBerriesCB = new Callback() {
+        @Override
+        public void onFailure(Call call, IOException e) {
+
+        }
+
+        @Override
+        public void onResponse(Call call, Response response) throws IOException {
+            ArrayList<Berry> berries = new ArrayList<>();
+            String data = response.body().string();
+            try {
+                if (response.isSuccessful()) {
+                    JSONArray jArray = new JSONArray(data);
+                    for (int i = 0; i < jArray.length(); i++) {
+                        berries.add(mMembaClient.JSONToBerry(jArray.getJSONObject(i)));
+                    }
+                    mHomeBerries = berries;
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mHomeFragment.showBerries(mHomeBerries);
+                        }
+                    });
+                } else {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mHomeFragment.showNoBerries();
+                        }
+                    });
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,10 +122,27 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-        StrictMode.setThreadPolicy(policy);
-
         mClientId = getIntent().getStringExtra("SIGNIN_CLIENTID");
+        mMembaClient = new MembaClient(mClientId);
+
+        googleSignIn();
+
+        String email = getIntent().getStringExtra("SIGNIN_EMAIL");
+        String userId = getIntent().getStringExtra("SIGNIN_ACCOUNTID");
+        String token = getIntent().getStringExtra("SIGNIN_IDTOKEN");
+
+        // Asynchronous callbacks
+        mMembaClient.getAccount(userId, mGetAccountCB);
+
+        // Load all fragments
+        mHomeFragment = (HomeFragment) getSupportFragmentManager().findFragmentById(R.id.contentFrame);
+        if (mHomeFragment == null) {
+            mHomeFragment = HomeFragment.newInstance();
+            ActivityUtils.addFragmentToActivity(getSupportFragmentManager(), mHomeFragment, R.id.contentFrame);
+        }
+    }
+
+    private void googleSignIn() {
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestProfile()
                 .requestEmail()
@@ -56,28 +154,34 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         mGoogleApiClient.connect();
+    }
 
-        String email = getIntent().getStringExtra("SIGNIN_EMAIL");
-        String userId = getIntent().getStringExtra("SIGNIN_ACCOUNTID");
-        String token = getIntent().getStringExtra("SIGNIN_IDTOKEN");
-
-        mAccount = new Account(email, token, userId);
-
-        mMembaClient = new MembaClient(mClientId);
-
-        HomeFragment homeFragment = (HomeFragment) getSupportFragmentManager().findFragmentById(R.id.contentFrame);
-        if (homeFragment == null) {
-            homeFragment = HomeFragment.newInstance(mMembaClient.getBerries(mAccount));
-            ActivityUtils.addFragmentToActivity(
-                    getSupportFragmentManager(), homeFragment, R.id.contentFrame);
+    private void setNavbar(Navbar n) {
+        switch(n) {
+            case HOME:
+                mHomeButton = (ImageButton) findViewById(R.id.home_button);
+                mHomeButton.setImageDrawable(getResources().getDrawable(R.drawable.home_selected, null));
+                mAddButton = (ImageButton) findViewById(R.id.add_button);
+                mAddButton.setImageDrawable(getResources().getDrawable(R.drawable.add_unselected, null));
+                mMapButton = (ImageButton) findViewById(R.id.map_button);
+                mMapButton.setImageDrawable(getResources().getDrawable(R.drawable.map_unselected, null));
+                break;
+            case ADD:
+                mHomeButton = (ImageButton) findViewById(R.id.home_button);
+                mHomeButton.setImageDrawable(getResources().getDrawable(R.drawable.home_unselected, null));
+                mAddButton = (ImageButton) findViewById(R.id.add_button);
+                mAddButton.setImageDrawable(getResources().getDrawable(R.drawable.add_selected, null));
+                mMapButton = (ImageButton) findViewById(R.id.map_button);
+                mMapButton.setImageDrawable(getResources().getDrawable(R.drawable.map_unselected, null));
+                break;
+            case MAP:
+                mHomeButton = (ImageButton) findViewById(R.id.home_button);
+                mHomeButton.setImageDrawable(getResources().getDrawable(R.drawable.home_unselected, null));
+                mAddButton = (ImageButton) findViewById(R.id.add_button);
+                mAddButton.setImageDrawable(getResources().getDrawable(R.drawable.add_unselected, null));
+                mMapButton = (ImageButton) findViewById(R.id.map_button);
+                mMapButton.setImageDrawable(getResources().getDrawable(R.drawable.map_selected, null));
         }
-
-        mHomeButton = (ImageButton) findViewById(R.id.home_button);
-        mHomeButton.setImageDrawable(getResources().getDrawable(R.drawable.home_selected, null));
-        mAddButton = (ImageButton) findViewById(R.id.add_button);
-        mAddButton.setImageDrawable(getResources().getDrawable(R.drawable.add_unselected, null));
-        mMapButton = (ImageButton) findViewById(R.id.map_button);
-        mMapButton.setImageDrawable(getResources().getDrawable(R.drawable.map_unselected, null));
     }
 
     @Override
@@ -105,5 +209,10 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onHomeLoaded() {
+        setNavbar(Navbar.HOME);
     }
 }
