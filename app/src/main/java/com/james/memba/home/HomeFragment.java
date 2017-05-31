@@ -3,7 +3,7 @@ package com.james.memba.home;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
+import android.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,8 +27,6 @@ public class HomeFragment extends Fragment {
     private ImageView mNoBerryIcon;
     private TextView mNoBerryMainView;
     private LinearLayout mBerriesView;
-
-    private ArrayList<Berry> mBerries;
 
     private OnHomeLoadedListener mHomeLoadedListener;
 
@@ -73,7 +71,7 @@ public class HomeFragment extends Fragment {
         super.onResume();
     }
 
-    public void showBerries(List<Berry> berries) {
+    public void showBerries(ArrayList<Berry> berries) {
         mListAdapter.replaceData(berries);
 
         mBerriesView.setVisibility(View.VISIBLE);

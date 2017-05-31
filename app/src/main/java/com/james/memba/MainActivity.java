@@ -1,11 +1,13 @@
 package com.james.memba;
 
-import android.os.StrictMode;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -14,10 +16,10 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.james.memba.addberry.AddBerryFragment;
 import com.james.memba.home.HomeFragment;
+import com.james.memba.map.ViewMapFragment;
 import com.james.memba.model.Account;
 import com.james.memba.model.Berry;
 import com.james.memba.services.MembaClient;
-import com.james.memba.utils.ActivityUtils;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -29,7 +31,8 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 
-public class MainActivity extends AppCompatActivity implements HomeFragment.OnHomeLoadedListener{
+public class MainActivity extends AppCompatActivity implements HomeFragment.OnHomeLoadedListener,
+AddBerryFragment.OnAddBerryLoadedListener, ViewMapFragment.OnViewMapLoadedListener {
 
     private String mClientId;
     private GoogleApiClient mGoogleApiClient;
@@ -37,12 +40,15 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
     // Fragments
     private HomeFragment mHomeFragment;
     private AddBerryFragment mAddBerryFragment;
+    private ViewMapFragment mViewMapFragment;
 
     // Navbar
     private ImageButton mHomeButton;
     private ImageButton mAddButton;
     private ImageButton mMapButton;
     private enum Navbar {HOME, ADD, MAP}
+    private Navbar mCurrentPage = Navbar.HOME;
+    private Navbar mLastPage = Navbar.HOME;
 
     private MembaClient mMembaClient;
 
@@ -134,12 +140,17 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
         // Asynchronous callbacks
         mMembaClient.getAccount(userId, mGetAccountCB);
 
+        // Navbar
+        mHomeButton = (ImageButton) findViewById(R.id.home_button);
+        mAddButton = (ImageButton) findViewById(R.id.add_button);
+        mMapButton = (ImageButton) findViewById(R.id.map_button);
+        setNavbarListeners();
+
         // Load all fragments
-        mHomeFragment = (HomeFragment) getSupportFragmentManager().findFragmentById(R.id.contentFrame);
-        if (mHomeFragment == null) {
-            mHomeFragment = HomeFragment.newInstance();
-            ActivityUtils.addFragmentToActivity(getSupportFragmentManager(), mHomeFragment, R.id.contentFrame);
-        }
+        mHomeFragment = HomeFragment.newInstance();
+        mAddBerryFragment = AddBerryFragment.newInstance();
+        mViewMapFragment = ViewMapFragment.newInstance();
+        switchPage(Navbar.HOME);
     }
 
     private void googleSignIn() {
@@ -156,31 +167,68 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
         mGoogleApiClient.connect();
     }
 
-    private void setNavbar(Navbar n) {
+    private void setNavbarListeners() {
+        mHomeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mCurrentPage != Navbar.HOME) {
+                    switchPage(Navbar.HOME);
+                }
+            }
+        });
+
+        mAddButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mCurrentPage != Navbar.ADD) {
+                    switchPage(Navbar.ADD);
+                }
+            }
+        });
+
+        mMapButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mCurrentPage != Navbar.MAP) {
+                    switchPage(Navbar.MAP);
+                }
+            }
+        });
+    }
+
+    private void switchPage(Navbar n) {
+        FragmentManager fm = getFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction();
+        mLastPage = mCurrentPage;
+
         switch(n) {
             case HOME:
-                mHomeButton = (ImageButton) findViewById(R.id.home_button);
                 mHomeButton.setImageDrawable(getResources().getDrawable(R.drawable.home_selected, null));
-                mAddButton = (ImageButton) findViewById(R.id.add_button);
                 mAddButton.setImageDrawable(getResources().getDrawable(R.drawable.add_unselected, null));
-                mMapButton = (ImageButton) findViewById(R.id.map_button);
                 mMapButton.setImageDrawable(getResources().getDrawable(R.drawable.map_unselected, null));
+                ft.replace(R.id.contentFrame, mHomeFragment)
+                        .addToBackStack(mCurrentPage.name())
+                        .commit();
+                mCurrentPage = Navbar.HOME;
                 break;
             case ADD:
-                mHomeButton = (ImageButton) findViewById(R.id.home_button);
                 mHomeButton.setImageDrawable(getResources().getDrawable(R.drawable.home_unselected, null));
-                mAddButton = (ImageButton) findViewById(R.id.add_button);
                 mAddButton.setImageDrawable(getResources().getDrawable(R.drawable.add_selected, null));
-                mMapButton = (ImageButton) findViewById(R.id.map_button);
                 mMapButton.setImageDrawable(getResources().getDrawable(R.drawable.map_unselected, null));
+                ft.replace(R.id.contentFrame, mAddBerryFragment)
+                        .addToBackStack(mCurrentPage.name())
+                        .commit();
+                mCurrentPage = Navbar.ADD;
                 break;
             case MAP:
-                mHomeButton = (ImageButton) findViewById(R.id.home_button);
                 mHomeButton.setImageDrawable(getResources().getDrawable(R.drawable.home_unselected, null));
-                mAddButton = (ImageButton) findViewById(R.id.add_button);
                 mAddButton.setImageDrawable(getResources().getDrawable(R.drawable.add_unselected, null));
-                mMapButton = (ImageButton) findViewById(R.id.map_button);
                 mMapButton.setImageDrawable(getResources().getDrawable(R.drawable.map_selected, null));
+                ft.replace(R.id.contentFrame, mViewMapFragment)
+                        .addToBackStack(mCurrentPage.name())
+                        .commit();
+                mCurrentPage = Navbar.MAP;
+                break;
         }
     }
 
@@ -212,7 +260,26 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
     }
 
     @Override
+    public void onBackPressed() {
+        if (getFragmentManager().getBackStackEntryCount() > 0) {
+            switchPage(mLastPage);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
     public void onHomeLoaded() {
-        setNavbar(Navbar.HOME);
+
+    }
+
+    @Override
+    public void onAddBerryLoaded() {
+
+    }
+
+    @Override
+    public void onViewMapLoaded() {
+
     }
 }

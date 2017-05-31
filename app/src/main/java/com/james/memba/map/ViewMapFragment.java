@@ -1,4 +1,4 @@
-package com.james.memba.addberry;
+package com.james.memba.map;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -9,16 +9,15 @@ import android.view.ViewGroup;
 
 import com.james.memba.R;
 
-public class AddBerryFragment extends Fragment {
+public class ViewMapFragment extends Fragment {
+    private OnViewMapLoadedListener mViewMapLoadedListener;
 
-    private OnAddBerryLoadedListener mAddBerryLoadedListener;
-
-    public AddBerryFragment() {
+    public ViewMapFragment() {
         // Required empty public constructor
     }
 
-    public static AddBerryFragment newInstance() {
-        AddBerryFragment fragment = new AddBerryFragment();
+    public static ViewMapFragment newInstance() {
+        ViewMapFragment fragment = new ViewMapFragment();
         return fragment;
     }
 
@@ -31,37 +30,37 @@ public class AddBerryFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View root = inflater.inflate(R.layout.add_berry_fragment, container, false);
+        View root = inflater.inflate(R.layout.view_map_fragment, container, false);
 
-        addBerryLoaded();
+        mapLoaded();
 
         return root;
     }
 
-    private void addBerryLoaded() {
-        if (mAddBerryLoadedListener != null) {
-            mAddBerryLoadedListener.onAddBerryLoaded();
+    private void mapLoaded() {
+        if (mViewMapLoadedListener != null) {
+            mViewMapLoadedListener.onViewMapLoaded();
         }
     }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof OnAddBerryLoadedListener) {
-            mAddBerryLoadedListener = (OnAddBerryLoadedListener) context;
+        if (context instanceof OnViewMapLoadedListener) {
+            mViewMapLoadedListener = (OnViewMapLoadedListener) context;
         } else {
             throw new RuntimeException(context.toString()
-                    + " must implement OnAddBerryLoadedListener");
+                    + " must implement OnViewMapLoadedListener");
         }
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
-        mAddBerryLoadedListener = null;
+        mViewMapLoadedListener = null;
     }
 
-    public interface OnAddBerryLoadedListener {
-        void onAddBerryLoaded();
+    public interface OnViewMapLoadedListener {
+        void onViewMapLoaded();
     }
 }
