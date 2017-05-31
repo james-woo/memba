@@ -1,18 +1,11 @@
 package com.james.memba.home;
 
-import android.content.Intent;
-import android.content.res.Resources;
-import android.graphics.Color;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -24,13 +17,9 @@ import com.james.memba.model.Berry;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+public class HomeFragment extends Fragment {
 
-/**
- * Display a grid of {@link Berry}s.
- */
-public class HomeFragment extends Fragment implements HomeContract.View {
-    private HomeContract.Presenter mPresenter;
+    private static final String HOME_BERRIES_LIST = "HOME_BERRIES_LIST";
 
     private BerryAdapter mListAdapter;
     private View mNoBerriesView;
@@ -38,17 +27,18 @@ public class HomeFragment extends Fragment implements HomeContract.View {
     private TextView mNoBerryMainView;
     private LinearLayout mBerriesView;
 
-    // Navbar
-    private ImageButton mHomeButton;
-    private ImageButton mAddButton;
-    private ImageButton mMapButton;
+    private ArrayList<Berry> mBerries;
 
     public HomeFragment() {
         // Required empty public constructor
     }
 
-    public static HomeFragment newInstance() {
-        return new HomeFragment();
+    public static HomeFragment newInstance(ArrayList<Berry> berries) {
+        HomeFragment fragment = new HomeFragment();
+        Bundle args = new Bundle();
+        args.putSerializable(HOME_BERRIES_LIST, berries);
+        fragment.setArguments(args);
+        return fragment;
     }
 
     @Override
@@ -56,22 +46,10 @@ public class HomeFragment extends Fragment implements HomeContract.View {
         super.onCreate(savedInstanceState);
 
         mListAdapter = new BerryAdapter(new ArrayList<Berry>(0));
-    }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        mPresenter.start();
-    }
-
-    @Override
-    public void setPresenter(@NonNull HomeContract.Presenter presenter) {
-        mPresenter = checkNotNull(presenter);
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        mPresenter.result(requestCode, resultCode);
+        if (getArguments() != null) {
+            mBerries = (ArrayList<Berry>) getArguments().getSerializable(HOME_BERRIES_LIST);
+        }
     }
 
     @Nullable
@@ -89,28 +67,20 @@ public class HomeFragment extends Fragment implements HomeContract.View {
         mNoBerryIcon = (ImageView) root.findViewById(R.id.noBerriesIcon);
         mNoBerryMainView = (TextView) root.findViewById(R.id.noBerriesMain);
 
-        mHomeButton = (ImageButton) root.findViewById(R.id.home_button);
-        mHomeButton.setImageDrawable(getResources().getDrawable(R.drawable.home_selected, null));
-        mAddButton = (ImageButton) root.findViewById(R.id.add_button);
-        mAddButton.setImageDrawable(getResources().getDrawable(R.drawable.add_unselected, null));
-        mMapButton = (ImageButton) root.findViewById(R.id.map_button);
-        mMapButton.setImageDrawable(getResources().getDrawable(R.drawable.map_unselected, null));
-
-        mPresenter.loadBerries(true);
+        if (mBerries.isEmpty()) {
+            showNoBerries();
+        } else {
+            showBerries(mBerries);
+        }
 
         return root;
     }
 
     @Override
-    public void showLoadingBerriesError() {
-        showMessage("Error while loading berries");
+    public void onResume() {
+        super.onResume();
     }
 
-    private void showMessage(String message) {
-        Snackbar.make(getView(), message, Snackbar.LENGTH_LONG).show();
-    }
-
-    @Override
     public void showBerries(List<Berry> berries) {
         mListAdapter.replaceData(berries);
 
@@ -118,86 +88,12 @@ public class HomeFragment extends Fragment implements HomeContract.View {
         mNoBerriesView.setVisibility(View.GONE);
     }
 
-    @Override
     public void showNoBerries() {
         mBerriesView.setVisibility(View.GONE);
         mNoBerriesView.setVisibility(View.VISIBLE);
     }
 
-    @Override
-    public void showAddBerry() {
-        //Intent intent = new Intent(getContext(), AddBerryActivity.class);
-        //startActivityForResult(intent, AddBerryActivity.REQUEST_ADD_BERRY);
-    }
-
-    @Override
-    public void showMap() {
-        //Intent intent = new Intent(getContext(), ViewMapActivity.class);
-        //startActivity(intent);
-    }
-
-    @Override
     public boolean isActive() {
         return isAdded();
-    }
-
-    private static class BerryAdapter extends BaseAdapter {
-        private List<Berry> mBerries;
-
-        public BerryAdapter(List<Berry> berries) {
-            setList(berries);
-        }
-
-        public void replaceData(List<Berry> berries) {
-            setList(berries);
-            notifyDataSetChanged();
-        }
-
-        private void setList(List<Berry> berries) {
-            mBerries = checkNotNull(berries);
-        }
-
-        @Override
-        public int getCount() {
-            return mBerries.size();
-        }
-
-        @Override
-        public Berry getItem(int i) {
-            return mBerries.get(i);
-        }
-
-        @Override
-        public long getItemId(int i) {
-            return i;
-        }
-
-        @Override
-        public View getView(int i, View view, ViewGroup viewGroup) {
-            View rowView = view;
-            if (rowView == null) {
-                LayoutInflater inflater = LayoutInflater.from(viewGroup.getContext());
-                rowView = inflater.inflate(R.layout.berry_item, viewGroup, false);
-            }
-
-            final Berry berry = getItem(i);
-
-            TextView usernameTV = (TextView) rowView.findViewById(R.id.username);
-            usernameTV.setText(berry.getUsername());
-
-            TextView locationTV = (TextView) rowView.findViewById(R.id.location);
-            locationTV.setText(berry.getLocation());
-
-            ImageView image = (ImageView) rowView.findViewById(R.id.image);
-            image.setImageBitmap(berry.getImage());
-
-            TextView descriptionTV = (TextView) rowView.findViewById(R.id.description);
-            descriptionTV.setText(berry.getDescription());
-
-            TextView dateTV = (TextView) rowView.findViewById(R.id.date);
-            dateTV.setText(berry.getDate());
-
-            return rowView;
-        }
     }
 }

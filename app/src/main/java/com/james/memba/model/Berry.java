@@ -1,12 +1,12 @@
 package com.james.memba.model;
 
-import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import java.io.Serializable;
 import java.util.Date;
 
-public class Berry {
+public class Berry implements Serializable {
     @NonNull
     private final String mId;
 
@@ -14,10 +14,10 @@ public class Berry {
     private final String mUsername;
 
     @NonNull
-    private final String mLocation;
+    private final Location mLocation;
 
     @NonNull
-    private final Bitmap mImage;
+    private final String mImage;
 
     @Nullable
     private final String mDescription;
@@ -25,7 +25,7 @@ public class Berry {
     @NonNull
     private final Date mDate;
 
-    public Berry(@NonNull String id, @NonNull String username, @NonNull String location, @NonNull Bitmap image, @Nullable String description, @NonNull Date date) {
+    public Berry(@NonNull String id, @NonNull String username, @NonNull String image, @Nullable String description, @NonNull Date date, @NonNull Location location) {
         mId = id;
         mUsername = username;
         mLocation = location;
@@ -45,12 +45,12 @@ public class Berry {
     }
 
     @NonNull
-    public String getLocation() {
+    public Location getLocation() {
         return mLocation;
     }
 
     @NonNull
-    public Bitmap getImage() {
+    public String getImage() {
         return mImage;
     }
 

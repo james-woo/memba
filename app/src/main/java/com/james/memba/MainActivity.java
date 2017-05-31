@@ -1,54 +1,48 @@
-package com.james.memba.home;
+package com.james.memba;
 
-import android.content.Intent;
-import android.graphics.Color;
-import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.api.Auth;
-import com.google.android.gms.auth.api.signin.GoogleSignInApi;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.james.memba.R;
-import com.james.memba.model.source.BerryRepository;
-import com.james.memba.model.source.remote.BerryRemoteDataSource;
+import com.james.memba.home.HomeFragment;
+import com.james.memba.model.Account;
+import com.james.memba.model.Berry;
+import com.james.memba.services.MembaClient;
 import com.james.memba.utils.ActivityUtils;
 
-public class HomeActivity extends AppCompatActivity {
+import java.util.ArrayList;
 
-    private HomePresenter mHomePresenter;
+public class MainActivity extends AppCompatActivity {
 
     private String mClientId;
     private GoogleApiClient mGoogleApiClient;
 
+    // Navbar
+    private ImageButton mHomeButton;
+    private ImageButton mAddButton;
+    private ImageButton mMapButton;
+
+    private MembaClient mMembaClient;
+
+    private Account mAccount;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.home_activity);
+        setContentView(R.layout.main_activity);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        //toolbar.setTitleTextColor(Color.BLACK);
         setSupportActionBar(toolbar);
 
-        HomeFragment homeFragment = (HomeFragment) getSupportFragmentManager().findFragmentById(R.id.contentFrame);
-        if (homeFragment == null) {
-            homeFragment = HomeFragment.newInstance();
-            ActivityUtils.addFragmentToActivity(
-                    getSupportFragmentManager(), homeFragment, R.id.contentFrame);
-        }
-
-        // Create the presenter
-
-        // TODO: Fix this temporary patch
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
-
-        mHomePresenter = new HomePresenter(
-                BerryRepository.getInstance(BerryRemoteDataSource.getInstance()), homeFragment);
 
         mClientId = getIntent().getStringExtra("SIGNIN_CLIENTID");
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -63,10 +57,27 @@ public class HomeActivity extends AppCompatActivity {
 
         mGoogleApiClient.connect();
 
-        // Load previously saved state, if available.
-        if (savedInstanceState != null) {
+        String email = getIntent().getStringExtra("SIGNIN_EMAIL");
+        String userId = getIntent().getStringExtra("SIGNIN_ACCOUNTID");
+        String token = getIntent().getStringExtra("SIGNIN_IDTOKEN");
 
+        mAccount = new Account(email, token, userId);
+
+        mMembaClient = new MembaClient(mClientId);
+
+        HomeFragment homeFragment = (HomeFragment) getSupportFragmentManager().findFragmentById(R.id.contentFrame);
+        if (homeFragment == null) {
+            homeFragment = HomeFragment.newInstance(mMembaClient.getBerries(mAccount));
+            ActivityUtils.addFragmentToActivity(
+                    getSupportFragmentManager(), homeFragment, R.id.contentFrame);
         }
+
+        mHomeButton = (ImageButton) findViewById(R.id.home_button);
+        mHomeButton.setImageDrawable(getResources().getDrawable(R.drawable.home_selected, null));
+        mAddButton = (ImageButton) findViewById(R.id.add_button);
+        mAddButton.setImageDrawable(getResources().getDrawable(R.drawable.add_unselected, null));
+        mMapButton = (ImageButton) findViewById(R.id.map_button);
+        mMapButton.setImageDrawable(getResources().getDrawable(R.drawable.map_unselected, null));
     }
 
     @Override

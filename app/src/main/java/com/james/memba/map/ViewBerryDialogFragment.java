@@ -1,4 +1,4 @@
-package com.james.memba.viewmap;
+package com.james.memba.map;
 
 public class ViewBerryDialogFragment {
 }

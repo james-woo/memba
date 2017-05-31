@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.james.memba.home.HomeActivity">
+    tools:context="com.james.memba.MainActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -38,5 +38,7 @@
         </android.support.design.widget.CoordinatorLayout>
 
     </LinearLayout>
+
+    <include layout="@layout/nav_bar"/>
 
 </android.support.design.widget.CoordinatorLayout>
