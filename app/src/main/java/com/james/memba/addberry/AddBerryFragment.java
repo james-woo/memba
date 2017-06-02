@@ -4,14 +4,26 @@ import android.content.Context;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.james.memba.R;
+import com.james.memba.model.Berry;
 
 public class AddBerryFragment extends Fragment {
 
     private OnAddBerryLoadedListener mAddBerryLoadedListener;
+    private OnAddBerryListener mAddBerryListener;
+
+    private EditText mTitleET;
+    private ImageView mImageIV;
+    private EditText mDescriptionET;
 
     public AddBerryFragment() {
         // Required empty public constructor
@@ -32,15 +44,47 @@ public class AddBerryFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View root = inflater.inflate(R.layout.add_berry_fragment, container, false);
+        setHasOptionsMenu(true);
+
+        mTitleET = (EditText) root.findViewById(R.id.title);
+        mImageIV = (ImageView) root.findViewById(R.id.image);
+        mDescriptionET = (EditText) root.findViewById(R.id.description);
 
         addBerryLoaded();
 
         return root;
     }
 
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        MenuItem item = menu.findItem(R.id.action_settings);
+        item.setVisible(false);
+        item = menu.findItem(R.id.action_sign_out);
+        item.setVisible(false);
+        inflater.inflate(R.menu.add_menu, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_add:
+                //Berry berry = new Berry()
+                Toast.makeText(getActivity(), "Added new memory", Toast.LENGTH_SHORT).show();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     private void addBerryLoaded() {
         if (mAddBerryLoadedListener != null) {
             mAddBerryLoadedListener.onAddBerryLoaded();
+        }
+    }
+
+    private void addBerry(Berry berry) {
+        if (mAddBerryListener != null) {
+            mAddBerryListener.onAddBerry(berry);
         }
     }
 
@@ -53,15 +97,27 @@ public class AddBerryFragment extends Fragment {
             throw new RuntimeException(context.toString()
                     + " must implement OnAddBerryLoadedListener");
         }
+
+        if (context instanceof OnAddBerryListener) {
+            mAddBerryListener = (OnAddBerryListener) context;
+        } else {
+            throw new RuntimeException(context.toString()
+                    + " must implement OnAddBerryListener");
+        }
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
         mAddBerryLoadedListener = null;
+        mAddBerryListener = null;
     }
 
     public interface OnAddBerryLoadedListener {
         void onAddBerryLoaded();
+    }
+
+    public interface OnAddBerryListener {
+        void onAddBerry(Berry berry);
     }
 }

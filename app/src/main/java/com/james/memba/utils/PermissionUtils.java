@@ -27,13 +27,6 @@ public class PermissionUtils {
         mPermissionResultCallback = (PermissionResultCallback) activity;
     }
 
-    /**
-     * Check the API Level & Permission
-     *
-     * @param permissions
-     * @param dialog_content
-     * @param request_code
-     */
     public void checkPermission(ArrayList<String> permissions, String dialog_content, int request_code) {
         this.mPermissionList = permissions;
         this.mDialogContent = dialog_content;
@@ -52,13 +45,6 @@ public class PermissionUtils {
         }
     }
 
-    /**
-     * Check and request the Permissions
-     *
-     * @param permissions
-     * @param request_code
-     * @return
-     */
     private boolean checkAndRequestPermissions(ArrayList<String> permissions,int request_code) {
         if(permissions.size()>0) {
             mListPermissionsNeeded = new ArrayList<>();
@@ -78,11 +64,6 @@ public class PermissionUtils {
         return true;
     }
 
-    /**
-     * @param requestCode
-     * @param permissions
-     * @param grantResults
-     */
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
             case 1:
@@ -95,7 +76,7 @@ public class PermissionUtils {
                     final ArrayList<String> pendingPermissions=new ArrayList<>();
                     for (int i = 0; i < mListPermissionsNeeded.size(); i++) {
                         if (perms.get(mListPermissionsNeeded.get(i)) != PackageManager.PERMISSION_GRANTED) {
-                            if(ActivityCompat.shouldShowRequestPermissionRationale(mActivity, mListPermissionsNeeded.get(i))) {
+                            if (ActivityCompat.shouldShowRequestPermissionRationale(mActivity, mListPermissionsNeeded.get(i))) {
                                 pendingPermissions.add(mListPermissionsNeeded.get(i));
                             } else {
                                 Log.i("Go to settings","and enable permissions");
@@ -135,12 +116,6 @@ public class PermissionUtils {
         }
     }
 
-    /**
-     * Explain why the app needs permissions
-     *
-     * @param message
-     * @param okListener
-     */
     private void showMessageOKCancel(String message, DialogInterface.OnClickListener okListener) {
         new AlertDialog.Builder(mActivity)
                 .setMessage(message)

@@ -53,6 +53,7 @@ import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity implements HomeFragment.OnHomeLoadedListener,
         AddBerryFragment.OnAddBerryLoadedListener,
+        AddBerryFragment.OnAddBerryListener,
         ViewMapFragment.OnViewMapLoadedListener,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
@@ -88,8 +89,6 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
     private boolean mIsPermissionGranted;
 
     private Account mAccount;
-
-    private ArrayList<Berry> mHomeBerries;
 
     private Location mLastLocation;
     private LocationRequest mLocationRequest;
@@ -130,7 +129,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
 
         @Override
         public void onResponse(Call call, Response response) throws IOException {
-            ArrayList<Berry> berries = new ArrayList<>();
+            final ArrayList<Berry> berries = new ArrayList<>();
             String data = response.body().string();
             try {
                 if (response.isSuccessful()) {
@@ -138,11 +137,10 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
                     for (int i = 0; i < jArray.length(); i++) {
                         berries.add(mMembaClient.JSONToBerry(jArray.getJSONObject(i)));
                     }
-                    mHomeBerries = berries;
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            mHomeFragment.showBerries(mHomeBerries);
+                            mHomeFragment.showBerries(berries);
                         }
                     });
                 } else {
@@ -178,10 +176,11 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
         mViewMapFragment = ViewMapFragment.newInstance();
         switchPage(Navbar.HOME);
 
-        permissionUtils=new PermissionUtils(this);
+        // Permissions
+        permissionUtils = new PermissionUtils(this);
         permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
         permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
-        permissionUtils.checkPermission(permissions, "Need GPS permission for getting your location",1);
+        permissionUtils.checkPermission(permissions, "Need GPS permission for getting your location", 1);
 
         mClientId = getIntent().getStringExtra("SIGNIN_CLIENTID");
         mMembaClient = new MembaClient(mClientId);
@@ -216,7 +215,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
         mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(10000);
         mLocationRequest.setFastestInterval(5000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(mLocationRequest);
 
@@ -225,7 +224,6 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
         result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
             @Override
             public void onResult(@NonNull LocationSettingsResult locationSettingsResult) {
-
                 final Status status = locationSettingsResult.getStatus();
 
                 switch (status.getStatusCode()) {
@@ -317,6 +315,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
                 ft.replace(R.id.contentFrame, mAddBerryFragment)
                         .addToBackStack(mCurrentPage.name())
                         .commit();
+
                 mCurrentPage = Navbar.ADD;
                 break;
             case MAP:
@@ -449,6 +448,11 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
 
     @Override
     public void onAddBerryLoaded() {
+
+    }
+
+    @Override
+    public void onAddBerry(Berry berry) {
 
     }
 

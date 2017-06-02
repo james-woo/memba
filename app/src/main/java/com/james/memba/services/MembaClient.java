@@ -6,15 +6,12 @@ import com.james.memba.model.Account;
 import com.james.memba.model.Berry;
 import com.james.memba.model.Location;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Date;
 
 import okhttp3.Authenticator;
-import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -69,8 +66,20 @@ public class MembaClient {
 
     public void getBerries(Account account, Callback cb) {
         Request request = new Request.Builder()
-                //.url(mBaseUrl + "users/" + account.getUserId() + "/berries")
-                .url(mBaseUrl + "users/123456789/berries")
+                .url(mBaseUrl + "users/" + account.getUserId() + "/berries")
+                .get()
+                .build();
+
+        mHttpClient.newCall(request).enqueue(cb);
+    }
+
+    /*
+     * Get all berries for map
+     * Only returns coordinates of berries, no description to increase speed
+     */
+    public void getBerries(Callback cb) {
+        Request request = new Request.Builder()
+                .url(mBaseUrl + "berries/")
                 .get()
                 .build();
 
@@ -104,6 +113,30 @@ public class MembaClient {
         }
 
         return berry;
+    }
+
+    public void createBerry(Account account, Berry berry) {
+        String postBody = "{\"userId\":" + account.getUserId() + ", " +
+                          " \"image\":" + berry.getImage() +
+                          " \"description\":" + berry.getDescription() +
+                          " \"location\":{" +
+                                "\"lat\":" + berry.getLocation().lat +
+                                "\"lng\":" + berry.getLocation().lng +
+                          "}}";
+
+        try {
+            Request request = new Request.Builder()
+                    .url(mBaseUrl + "berries/")
+                    .post(RequestBody.create(MediaType.parse("application/json"), postBody))
+                    .build();
+
+            Response response = mHttpClient.newCall(request).execute();
+            if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+
+            System.out.println(response.body().string());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public Berry JSONToBerry(JSONObject object) {
