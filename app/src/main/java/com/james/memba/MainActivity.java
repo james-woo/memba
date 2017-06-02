@@ -1,10 +1,18 @@
 package com.james.memba;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.Intent;
+import android.content.IntentSender;
+import android.location.Location;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -13,13 +21,25 @@ import android.widget.Toast;
 
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStates;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.james.memba.addberry.AddBerryFragment;
 import com.james.memba.home.HomeFragment;
 import com.james.memba.map.ViewMapFragment;
 import com.james.memba.model.Account;
 import com.james.memba.model.Berry;
 import com.james.memba.services.MembaClient;
+import com.james.memba.utils.PermissionUtils;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -32,7 +52,16 @@ import okhttp3.Callback;
 import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity implements HomeFragment.OnHomeLoadedListener,
-AddBerryFragment.OnAddBerryLoadedListener, ViewMapFragment.OnViewMapLoadedListener {
+        AddBerryFragment.OnAddBerryLoadedListener,
+        ViewMapFragment.OnViewMapLoadedListener,
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
+        ActivityCompat.OnRequestPermissionsResultCallback,
+        PermissionUtils.PermissionResultCallback {
+
+    private final static String TAG = "MAIN_ACTIVITY";
+    private final static int PLAY_SERVICES_REQUEST = 1000;
+    private final static int REQUEST_CHECK_SETTINGS = 2000;
 
     private String mClientId;
     private GoogleApiClient mGoogleApiClient;
@@ -46,15 +75,24 @@ AddBerryFragment.OnAddBerryLoadedListener, ViewMapFragment.OnViewMapLoadedListen
     private ImageButton mHomeButton;
     private ImageButton mAddButton;
     private ImageButton mMapButton;
+
     private enum Navbar {HOME, ADD, MAP}
+
     private Navbar mCurrentPage = Navbar.HOME;
     private Navbar mLastPage = Navbar.HOME;
 
     private MembaClient mMembaClient;
 
+    private ArrayList<String> permissions = new ArrayList<>();
+    private PermissionUtils permissionUtils;
+    private boolean mIsPermissionGranted;
+
     private Account mAccount;
 
     private ArrayList<Berry> mHomeBerries;
+
+    private Location mLastLocation;
+    private LocationRequest mLocationRequest;
 
     private Callback mGetAccountCB = new Callback() {
         @Override
@@ -128,18 +166,6 @@ AddBerryFragment.OnAddBerryLoadedListener, ViewMapFragment.OnViewMapLoadedListen
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        mClientId = getIntent().getStringExtra("SIGNIN_CLIENTID");
-        mMembaClient = new MembaClient(mClientId);
-
-        googleSignIn();
-
-        String email = getIntent().getStringExtra("SIGNIN_EMAIL");
-        String userId = getIntent().getStringExtra("SIGNIN_ACCOUNTID");
-        String token = getIntent().getStringExtra("SIGNIN_IDTOKEN");
-
-        // Asynchronous callbacks
-        mMembaClient.getAccount(userId, mGetAccountCB);
-
         // Navbar
         mHomeButton = (ImageButton) findViewById(R.id.home_button);
         mAddButton = (ImageButton) findViewById(R.id.add_button);
@@ -151,9 +177,27 @@ AddBerryFragment.OnAddBerryLoadedListener, ViewMapFragment.OnViewMapLoadedListen
         mAddBerryFragment = AddBerryFragment.newInstance();
         mViewMapFragment = ViewMapFragment.newInstance();
         switchPage(Navbar.HOME);
+
+        permissionUtils=new PermissionUtils(this);
+        permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+        permissionUtils.checkPermission(permissions, "Need GPS permission for getting your location",1);
+
+        mClientId = getIntent().getStringExtra("SIGNIN_CLIENTID");
+        mMembaClient = new MembaClient(mClientId);
+
+        // Synchronized
+        googleAPISetup();
+
+        String email = getIntent().getStringExtra("SIGNIN_EMAIL");
+        String userId = getIntent().getStringExtra("SIGNIN_ACCOUNTID");
+        String token = getIntent().getStringExtra("SIGNIN_IDTOKEN");
+
+        // Asynchronous callbacks
+        mMembaClient.getAccount(userId, mGetAccountCB);
     }
 
-    private void googleSignIn() {
+    private synchronized void googleAPISetup() {
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestProfile()
                 .requestEmail()
@@ -162,9 +206,64 @@ AddBerryFragment.OnAddBerryLoadedListener, ViewMapFragment.OnViewMapLoadedListen
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
                 .build();
 
         mGoogleApiClient.connect();
+
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(10000);
+        mLocationRequest.setFastestInterval(5000);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(mLocationRequest);
+
+        PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient, builder.build());
+
+        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+            @Override
+            public void onResult(@NonNull LocationSettingsResult locationSettingsResult) {
+
+                final Status status = locationSettingsResult.getStatus();
+
+                switch (status.getStatusCode()) {
+                    case LocationSettingsStatusCodes.SUCCESS:
+                        // All location settings are satisfied. The client can initialize location requests here
+                        getLocation();
+                        break;
+                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                        try {
+                            // Show the dialog by calling startResolutionForResult(),
+                            // and check the result in onActivityResult().
+                            status.startResolutionForResult(MainActivity.this, REQUEST_CHECK_SETTINGS);
+                        } catch (IntentSender.SendIntentException e) {
+                            // Ignore the error.
+                        }
+                        break;
+                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                        break;
+                }
+            }
+        });
+    }
+
+    private void getLocation() {
+        if (mIsPermissionGranted) {
+            try {
+                LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, new LocationListener() {
+                    @Override
+                    public void onLocationChanged(Location location) {
+                        mLastLocation = location;
+                        mViewMapFragment.updateLocation(mLastLocation);
+                    }
+                });
+                mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+            } catch (SecurityException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void setNavbarListeners() {
@@ -201,7 +300,7 @@ AddBerryFragment.OnAddBerryLoadedListener, ViewMapFragment.OnViewMapLoadedListen
         FragmentTransaction ft = fm.beginTransaction();
         mLastPage = mCurrentPage;
 
-        switch(n) {
+        switch (n) {
             case HOME:
                 mHomeButton.setImageDrawable(getResources().getDrawable(R.drawable.home_selected, null));
                 mAddButton.setImageDrawable(getResources().getDrawable(R.drawable.add_unselected, null));
@@ -230,6 +329,81 @@ AddBerryFragment.OnAddBerryLoadedListener, ViewMapFragment.OnViewMapLoadedListen
                 mCurrentPage = Navbar.MAP;
                 break;
         }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    public void onStop() {
+        if (mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
+        }
+
+        super.onStop();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case REQUEST_CHECK_SETTINGS:
+                switch (resultCode) {
+                    case Activity.RESULT_OK:
+                        // All required changes were successfully made
+                        getLocation();
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        // The user was asked to change settings, but chose not to
+                        break;
+                    default:
+                        break;
+                }
+                break;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        // redirects to utils
+        permissionUtils.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @Override
+    public void onConnected(Bundle connectionHint) {
+        getLocation();
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void PermissionGranted(int requestCode) {
+        Log.i("PERMISSION","GRANTED");
+        mIsPermissionGranted = true;
+    }
+
+    @Override
+    public void PartialPermissionGranted(int requestCode, ArrayList<String> grantedPermissions) {
+        Log.i("PERMISSION PARTIALLY","GRANTED");
+    }
+
+    @Override
+    public void PermissionDenied(int requestCode) {
+        Log.i("PERMISSION","DENIED");
+    }
+
+    @Override
+    public void NeverAskAgain(int requestCode) {
+        Log.i("PERMISSION","NEVER ASK AGAIN");
     }
 
     @Override
@@ -280,6 +454,6 @@ AddBerryFragment.OnAddBerryLoadedListener, ViewMapFragment.OnViewMapLoadedListen
 
     @Override
     public void onViewMapLoaded() {
-
+        mViewMapFragment.updateLocation(mLastLocation);
     }
 }
