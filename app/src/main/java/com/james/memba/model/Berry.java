@@ -1,66 +1,151 @@
 package com.james.memba.model;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
-public class Berry implements Serializable {
-    @NonNull
-    private final String mId;
+public class Berry implements Serializable
+{
 
-    @NonNull
-    private final String mUsername;
+    @SerializedName("_id") @Expose private String mId;
+    @SerializedName("userId") @Expose private String mUserId;
+    @SerializedName("entries") @Expose private List<Entry> mEntries = null;
+    @SerializedName("createDate") @Expose private String mCreateDate;
+    @SerializedName("updateDate") @Expose private String mUpdateDate;
+    @SerializedName("location") @Expose private Location mLocation;
+    private final static long serialVersionUID = -2715039531261762861L;
 
-    @NonNull
-    private final Location mLocation;
-
-    @NonNull
-    private final String mImage;
-
-    @Nullable
-    private final String mDescription;
-
-    @NonNull
-    private final Date mDate;
-
-    public Berry(@NonNull String id, @NonNull String username, @NonNull String image, @Nullable String description, @NonNull Date date, @NonNull Location location) {
-        mId = id;
-        mUsername = username;
-        mLocation = location;
-        mImage = image;
-        mDescription = description;
-        mDate = date;
+    /**
+     * No args constructor for use in serialization
+     *
+     */
+    public Berry() {
     }
 
-    @NonNull
+    /**
+     *
+     * @param id
+     * @param location
+     * @param userId
+     * @param entries
+     * @param createDate
+     */
+    public Berry(String id, String userId, List<Entry> entries, String createDate, String updateDate, Location location) {
+        super();
+        this.mId = id;
+        this.mUserId = userId;
+        this.mEntries = entries;
+        this.mCreateDate = createDate;
+        this.mUpdateDate = updateDate;
+        this.mLocation = location;
+    }
+
+    public Berry(String id, String userId, Entry entry, String createDate, String updateDate, Location location) {
+        super();
+        this.mId = id;
+        this.mUserId = userId;
+        this.mEntries = new ArrayList<Entry>();
+        this.mEntries.add(entry);
+        this.mCreateDate = createDate;
+        this.mUpdateDate = updateDate;
+        this.mLocation = location;
+    }
+
     public String getId() {
         return mId;
     }
 
-    @NonNull
-    public String getUsername() {
-        return mUsername;
+    public void setId(String id) {
+        this.mId = id;
     }
 
-    @NonNull
+    public Berry withId(String id) {
+        this.mId = id;
+        return this;
+    }
+
+    public String getUserId() {
+        return mUserId;
+    }
+
+    public void setUserId(String userId) {
+        this.mUserId = userId;
+    }
+
+    public Berry withUserId(String userId) {
+        this.mUserId = userId;
+        return this;
+    }
+
+    public List<Entry> getEntries() {
+        return mEntries;
+    }
+
+    public void setEntries(List<Entry> entries) {
+        this.mEntries = entries;
+    }
+
+    public Berry withEntries(List<Entry> entries) {
+        this.mEntries = entries;
+        return this;
+    }
+
+    public String getUpdateDate() {
+        return mUpdateDate;
+    }
+
+    public void setUpdateDate(String updateDate) {
+        this.mUpdateDate = updateDate;
+    }
+
+    public Berry withUpdateDate(String updateDate) {
+        this.mUpdateDate = updateDate;
+        return this;
+    }
+
+    public String getCreateDate() {
+        return mCreateDate;
+    }
+
+    public void setCreateDate(String createDate) {
+        this.mCreateDate = createDate;
+    }
+
+    public Berry withCreateDate(String createDate) {
+        this.mCreateDate = createDate;
+        return this;
+    }
+
     public Location getLocation() {
         return mLocation;
     }
 
-    @NonNull
-    public String getImage() {
-        return mImage;
+    public void setLocation(Location location) {
+        this.mLocation = location;
     }
 
-    @NonNull
-    public String getDescription() {
-        return mDescription;
+    public void setLocation(android.location.Location location) {
+        this.mLocation = new Location(location);
     }
 
-    @NonNull
-    public String getDate() {
-        return mDate.toString();
+    public Berry withLocation(Location location) {
+        this.mLocation = location;
+        return this;
+    }
+
+    public static Berry parseJSON(String response) {
+        Gson gson = new GsonBuilder().create();
+        return gson.fromJson(response, Berry.class);
+    }
+
+    public static Berry createBerry(String title, String image, String text) {
+        String date = String.valueOf(new Date().getTime());
+        return new Berry(null, null, new Entry(title, date, image, text), date, date, null);
     }
 }

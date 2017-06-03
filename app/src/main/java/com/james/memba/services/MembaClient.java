@@ -2,14 +2,11 @@ package com.james.memba.services;
 
 import android.support.annotation.Nullable;
 
+import com.google.gson.Gson;
 import com.james.memba.model.Account;
 import com.james.memba.model.Berry;
-import com.james.memba.model.Location;
-
-import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.Date;
 
 import okhttp3.Authenticator;
 import okhttp3.Callback;
@@ -104,9 +101,8 @@ public class MembaClient {
             }
 
             String data = responses.body().string();
-            JSONObject jObject = new JSONObject(data);
 
-            berry = JSONToBerry(jObject);
+            berry = Berry.parseJSON(data);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -115,47 +111,15 @@ public class MembaClient {
         return berry;
     }
 
-    public void createBerry(Account account, Berry berry) {
-        String postBody = "{\"userId\":" + account.getUserId() + ", " +
-                          " \"image\":" + berry.getImage() +
-                          " \"description\":" + berry.getDescription() +
-                          " \"location\":{" +
-                                "\"lat\":" + berry.getLocation().lat +
-                                "\"lng\":" + berry.getLocation().lng +
-                          "}}";
+    public void createBerry(Berry berry, Callback cb) {
+        Gson gson = new Gson();
+        String postBody = gson.toJson(berry);
 
-        try {
-            Request request = new Request.Builder()
-                    .url(mBaseUrl + "berries/")
-                    .post(RequestBody.create(MediaType.parse("application/json"), postBody))
-                    .build();
+        Request request = new Request.Builder()
+                .url(mBaseUrl + "berries/")
+                .post(RequestBody.create(MediaType.parse("application/json"), postBody))
+                .build();
 
-            Response response = mHttpClient.newCall(request).execute();
-            if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
-
-            System.out.println(response.body().string());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public Berry JSONToBerry(JSONObject object) {
-        Berry berry = null;
-
-        try {
-            String id = object.getString("_id");
-            String user = object.getString("userId");
-            String image = object.getString("image");
-            String description = object.getString("description");
-            long date = object.getLong("createDate");
-            JSONObject lObject = object.getJSONObject("location");
-            Location location = new Location(lObject.getDouble("lat"), lObject.getDouble("lng"));
-
-            berry = new Berry(id, user, image, description, new Date(date), location);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return berry;
+        mHttpClient.newCall(request).enqueue(cb);
     }
 }

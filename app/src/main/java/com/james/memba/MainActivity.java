@@ -31,8 +31,10 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
-import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import com.james.memba.addberry.AddBerryFragment;
 import com.james.memba.home.HomeFragment;
 import com.james.memba.map.ViewMapFragment;
@@ -41,11 +43,12 @@ import com.james.memba.model.Berry;
 import com.james.memba.services.MembaClient;
 import com.james.memba.utils.PermissionUtils;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -129,18 +132,21 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
 
         @Override
         public void onResponse(Call call, Response response) throws IOException {
-            final ArrayList<Berry> berries = new ArrayList<>();
-            String data = response.body().string();
+            final String data = response.body().string();
+
             try {
                 if (response.isSuccessful()) {
-                    JSONArray jArray = new JSONArray(data);
-                    for (int i = 0; i < jArray.length(); i++) {
-                        berries.add(mMembaClient.JSONToBerry(jArray.getJSONObject(i)));
-                    }
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            mHomeFragment.showBerries(berries);
+                            Type listType = new TypeToken<List<Berry>>() {}.getType();
+                            try {
+                                Gson gson = new GsonBuilder().create();
+                                List<Berry> berries = gson.fromJson(data, listType);
+                                mHomeFragment.showBerries(new ArrayList<>(berries));
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
                         }
                     });
                 } else {
@@ -154,6 +160,19 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+    };
+
+    private Callback createBerryCB = new Callback() {
+        @Override
+        public void onFailure(Call call, IOException e) {
+
+        }
+
+        @Override
+        public void onResponse(Call call, Response response) throws IOException {
+            System.out.println(response);
+            mMembaClient.getBerries(mAccount, mGetBerriesCB);
         }
     };
 
@@ -215,7 +234,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
         mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(10000);
         mLocationRequest.setFastestInterval(5000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(mLocationRequest);
 
@@ -453,7 +472,10 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
 
     @Override
     public void onAddBerry(Berry berry) {
-
+        berry.setUserId(mAccount.getUserId());
+        berry.setLocation(mLastLocation);
+        mMembaClient.createBerry(berry, createBerryCB);
+        switchPage(Navbar.HOME);
     }
 
     @Override

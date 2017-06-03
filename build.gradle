@@ -44,4 +44,5 @@ ext {
     espressoVersion = '2.2.2'
     okhttpVersion = '3.8.0'
     picassoVersion = '2.5.2'
+    gsonVersion = '2.8.1'
 }

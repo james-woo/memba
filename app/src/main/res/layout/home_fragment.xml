@@ -7,18 +7,11 @@
     android:orientation="vertical"
     tools:context="com.james.memba.home.HomeFragment">
 
-    <LinearLayout
-        android:id="@+id/berryLL"
+    <ListView
+        android:id="@+id/berry_list"
+        android:divider="@null"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <ListView
-            android:id="@+id/berry_list"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-    </LinearLayout>
+        android:layout_height="match_parent"/>
 
     <LinearLayout
         android:id="@+id/noBerries"

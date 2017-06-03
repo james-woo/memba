@@ -15,6 +15,10 @@ import android.widget.Toast;
 
 import com.james.memba.R;
 import com.james.memba.model.Berry;
+import com.james.memba.model.Entry;
+
+import java.util.ArrayList;
+import java.util.Date;
 
 public class AddBerryFragment extends Fragment {
 
@@ -23,7 +27,9 @@ public class AddBerryFragment extends Fragment {
 
     private EditText mTitleET;
     private ImageView mImageIV;
-    private EditText mDescriptionET;
+    private EditText mTextET;
+
+    private String mImagePath;
 
     public AddBerryFragment() {
         // Required empty public constructor
@@ -48,7 +54,7 @@ public class AddBerryFragment extends Fragment {
 
         mTitleET = (EditText) root.findViewById(R.id.title);
         mImageIV = (ImageView) root.findViewById(R.id.image);
-        mDescriptionET = (EditText) root.findViewById(R.id.description);
+        mTextET = (EditText) root.findViewById(R.id.description);
 
         addBerryLoaded();
 
@@ -69,7 +75,9 @@ public class AddBerryFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_add:
-                //Berry berry = new Berry()
+                String title = mTitleET.getText().toString();
+                String text = mTextET.getText().toString();
+                addBerry(title, mImagePath, text);
                 Toast.makeText(getActivity(), "Added new memory", Toast.LENGTH_SHORT).show();
                 return true;
         }
@@ -82,9 +90,9 @@ public class AddBerryFragment extends Fragment {
         }
     }
 
-    private void addBerry(Berry berry) {
+    private void addBerry(String title, String image, String text) {
         if (mAddBerryListener != null) {
-            mAddBerryListener.onAddBerry(berry);
+            mAddBerryListener.onAddBerry(Berry.createBerry(title, image, text));
         }
     }
 

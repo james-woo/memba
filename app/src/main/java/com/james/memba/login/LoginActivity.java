@@ -114,7 +114,7 @@ public class LoginActivity extends AppCompatActivity implements
         if (result.isSuccess()) {
             // Signed in successfully, show authenticated UI.
             GoogleSignInAccount acct = result.getSignInAccount();
-            mStatusTextView.setText("Signed in as" + acct.getDisplayName());
+            mStatusTextView.setText("Signed in as " + acct.getDisplayName());
             updateUI(true);
 
             GoogleSignInAccount account = result.getSignInAccount();

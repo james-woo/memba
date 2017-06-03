@@ -26,7 +26,7 @@ public class HomeFragment extends Fragment {
     private View mNoBerriesView;
     private ImageView mNoBerryIcon;
     private TextView mNoBerryMainView;
-    private LinearLayout mBerriesView;
+    private ListView mBerryList;
 
     private OnHomeLoadedListener mHomeLoadedListener;
 
@@ -53,9 +53,8 @@ public class HomeFragment extends Fragment {
         // Inflate the layout for this fragment
         View root = inflater.inflate(R.layout.home_fragment, container, false);
 
-        ListView listView = (ListView) root.findViewById(R.id.berry_list);
-        listView.setAdapter(mListAdapter);
-        mBerriesView = (LinearLayout) root.findViewById(R.id.berryLL);
+        mBerryList = (ListView) root.findViewById(R.id.berry_list);
+        mBerryList.setAdapter(mListAdapter);
 
         mNoBerriesView = root.findViewById(R.id.noBerries);
         mNoBerryIcon = (ImageView) root.findViewById(R.id.noBerriesIcon);
@@ -73,13 +72,12 @@ public class HomeFragment extends Fragment {
 
     public void showBerries(ArrayList<Berry> berries) {
         mListAdapter.replaceData(berries);
-
-        mBerriesView.setVisibility(View.VISIBLE);
         mNoBerriesView.setVisibility(View.GONE);
+        mBerryList.setVisibility(View.VISIBLE);
     }
 
     public void showNoBerries() {
-        mBerriesView.setVisibility(View.GONE);
+        mBerryList.setVisibility(View.GONE);
         mNoBerriesView.setVisibility(View.VISIBLE);
     }
 
