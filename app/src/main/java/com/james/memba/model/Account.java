@@ -8,8 +8,10 @@ public class Account implements Serializable {
 
     @SerializedName("_id") @Expose private String mId;
     @SerializedName("userId") @Expose private String mUserId;
+    @SerializedName("userName") @Expose private String mUsername;
     @SerializedName("createDate") @Expose private int mCeateDate;
     @SerializedName("berries") @Expose private List<Object> mBerries = null;
+
     private final static long serialVersionUID = -6126086970311859495L;
 
     /**
@@ -46,6 +48,19 @@ public class Account implements Serializable {
 
     public Account withUserId(String userId) {
         this.mUserId = userId;
+        return this;
+    }
+
+    public String getUsername() {
+        return mUsername;
+    }
+
+    public void setUsername(String username) {
+        this.mUsername = username;
+    }
+
+    public Account withUsername(String username) {
+        this.mUsername = username;
         return this;
     }
 

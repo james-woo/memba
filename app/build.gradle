@@ -43,6 +43,7 @@ dependencies {
     compile "com.android.support.test.espresso:espresso-idling-resource:$rootProject.espressoVersion"
     compile "com.google.android.gms:play-services-auth:$rootProject.googlePlayServicesVersion"
     compile "com.google.android.gms:play-services-location:$rootProject.googlePlayServicesVersion"
+    compile "com.google.android.gms:play-services-plus:$rootProject.googlePlayServicesVersion"
     compile "com.google.guava:guava:$rootProject.guavaVersion"
     compile "com.squareup.okhttp3:okhttp:$rootProject.okhttpVersion"
     compile "com.squareup.picasso:picasso:$rootProject.picassoVersion"

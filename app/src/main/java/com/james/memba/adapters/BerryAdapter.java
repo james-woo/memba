@@ -1,27 +1,26 @@
-package com.james.memba.home;
+package com.james.memba.adapters;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.support.v7.widget.LinearLayoutManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import com.james.memba.R;
 import com.james.memba.model.Berry;
 import com.james.memba.model.Entry;
+import com.james.memba.model.Location;
+import com.james.memba.utils.DateUtil;
 import com.squareup.picasso.Picasso;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -69,16 +68,16 @@ public class BerryAdapter extends BaseAdapter {
             final Berry berry = getItem(i);
 
             TextView usernameTV = (TextView) rowView.findViewById(R.id.username);
-            usernameTV.setText(berry.getUserId());
+            usernameTV.setText(berry.getUsername());
 
             TextView locationTV = (TextView) rowView.findViewById(R.id.location);
-            locationTV.setText(berry.getLocation().toString());
+            locationTV.setText(getAddress(berry.getLocation()));
 
             LinearLayout entryLL = (LinearLayout) rowView.findViewById(R.id.entry_list);
             insertEntries(entryLL, inflater, viewGroup, berry.getEntries());
 
             TextView dateTV = (TextView) rowView.findViewById(R.id.date);
-            dateTV.setText(berry.getCreateDate().toString());
+            dateTV.setText(DateUtil.longToDate(Long.parseLong(berry.getUpdateDate())));
         }
 
         return rowView;
@@ -91,7 +90,7 @@ public class BerryAdapter extends BaseAdapter {
             titleTV.setText(e.getTitle());
 
             TextView dateTV = (TextView) child.findViewById(R.id.date);
-            dateTV.setText(e.getDate());
+            dateTV.setText(DateUtil.longToDate(Long.parseLong(e.getDate())));
 
             ImageView image = (ImageView) child.findViewById(R.id.image);
             Picasso.with(mContext).load(e.getImage()).into(image);
@@ -101,6 +100,20 @@ public class BerryAdapter extends BaseAdapter {
 
             ll.addView(child);
         }
+    }
+
+    private String getAddress(Location location) {
+        Geocoder geocoder;
+        List<Address> addresses;
+        geocoder = new Geocoder(mContext, Locale.getDefault());
+
+        try {
+            addresses = geocoder.getFromLocation(location.lat, location.lng, 1);
+            return addresses.get(0).getLocality();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 }

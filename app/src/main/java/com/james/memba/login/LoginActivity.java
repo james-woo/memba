@@ -22,6 +22,8 @@ import com.google.android.gms.common.api.Status;
 import com.james.memba.MainActivity;
 import com.james.memba.R;
 
+import static com.james.memba.utils.KeyUtil.GoogleClientId;
+
 /**
  * A login screen that offers login via email/password.
  */
@@ -35,8 +37,6 @@ public class LoginActivity extends AppCompatActivity implements
     private GoogleApiClient mGoogleApiClient;
     private TextView mStatusTextView;
     private ProgressDialog mProgressDialog;
-
-    private final String mClientId = "1009693540713-l9eim0cp3t975mf861qp26lir5lcjsb4.apps.googleusercontent.com";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +54,7 @@ public class LoginActivity extends AppCompatActivity implements
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 .requestProfile()
-                .requestIdToken(mClientId)
+                .requestIdToken(GoogleClientId)
                 .build();
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -125,7 +125,6 @@ public class LoginActivity extends AppCompatActivity implements
             intent.putExtra("SIGNIN_DISPLAYNAME", account.getDisplayName());
             intent.putExtra("SIGNIN_PHOTOURL", account.getPhotoUrl() + "?sz=275");
             intent.putExtra("SIGNIN_EMAIL", account.getEmail());
-            intent.putExtra("SIGNIN_CLIENTID", mClientId);
 
             startActivity(intent);
         } else {

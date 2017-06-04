@@ -7,6 +7,7 @@ import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.location.Location;
+import android.provider.Contacts;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -32,14 +33,18 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.plus.Plus;
+import com.google.android.gms.plus.model.people.Person;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.james.memba.addberry.AddBerryFragment;
 import com.james.memba.home.HomeFragment;
+import com.james.memba.map.ViewBerryDialogFragment;
 import com.james.memba.map.ViewMapFragment;
 import com.james.memba.model.Account;
 import com.james.memba.model.Berry;
+import com.james.memba.model.BerryLocation;
 import com.james.memba.services.MembaClient;
 import com.james.memba.utils.PermissionUtils;
 
@@ -54,10 +59,13 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 
+import static com.james.memba.utils.KeyUtil.GoogleClientId;
+
 public class MainActivity extends AppCompatActivity implements HomeFragment.OnHomeLoadedListener,
         AddBerryFragment.OnAddBerryLoadedListener,
         AddBerryFragment.OnAddBerryListener,
         ViewMapFragment.OnViewMapLoadedListener,
+        ViewMapFragment.OnMarkerClickedListener,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
         ActivityCompat.OnRequestPermissionsResultCallback,
@@ -67,7 +75,6 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
     private final static int PLAY_SERVICES_REQUEST = 1000;
     private final static int REQUEST_CHECK_SETTINGS = 2000;
 
-    private String mClientId;
     private GoogleApiClient mGoogleApiClient;
 
     // Fragments
@@ -81,7 +88,6 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
     private ImageButton mMapButton;
 
     private enum Navbar {HOME, ADD, MAP}
-
     private Navbar mCurrentPage = Navbar.HOME;
     private Navbar mLastPage = Navbar.HOME;
 
@@ -107,16 +113,19 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
             String data = response.body().string();
 
             try {
+                JSONObject object = new JSONObject(data);
+                mAccount = new Account(object.getString("userId"));
                 if (response.isSuccessful()) {
                     // Retrieve account information
-                    JSONObject object = new JSONObject(data);
-                    mAccount = new Account(object.getString("userId"));
-                    mMembaClient.getBerries(mAccount, mGetBerriesCB);
+                    mMembaClient.getAccountBerries(mAccount, mGetAccountBerriesCB);
+                    String username = getIntent().getStringExtra("SIGNIN_DISPLAYNAME");
+                    if (!mAccount.getUsername().equals(username)) {
+                        // update user account
+                        mMembaClient.updateAccountUsername(mAccount);
+                    }
                 } else {
                     // Create new account
-                    JSONObject object = new JSONObject(data);
-                    mAccount = new Account(object.getString("userId"));
-                    mMembaClient.createAccount(mAccount.getUserId());
+                    mMembaClient.createAccount(mAccount);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -124,7 +133,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
         }
     };
 
-    private Callback mGetBerriesCB = new Callback() {
+    private Callback mGetAccountBerriesCB = new Callback() {
         @Override
         public void onFailure(Call call, IOException e) {
 
@@ -163,6 +172,73 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
         }
     };
 
+    private Callback getBerryCB = new Callback() {
+        @Override
+        public void onFailure(Call call, IOException e) {
+
+        }
+
+        @Override
+        public void onResponse(Call call, Response response) throws IOException {
+            final String data = response.body().string();
+
+            try {
+                if (response.isSuccessful()) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Type type = new TypeToken<Berry>() {}.getType();
+                            try {
+                                Gson gson = new GsonBuilder().create();
+                                Berry berry = gson.fromJson(data, type);
+
+                                FragmentManager fm = getFragmentManager();
+                                ViewBerryDialogFragment viewBerry = ViewBerryDialogFragment.newInstance(berry);
+                                viewBerry.show(fm, viewBerry.getTag());
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    };
+
+    private Callback getBerriesCB = new Callback() {
+        @Override
+        public void onFailure(Call call, IOException e) {
+
+        }
+
+        @Override
+        public void onResponse(Call call, Response response) throws IOException {
+            final String data = response.body().string();
+
+            try {
+                if (response.isSuccessful()) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Type listType = new TypeToken<List<BerryLocation>>() {}.getType();
+                            try {
+                                Gson gson = new GsonBuilder().create();
+                                List<BerryLocation> locations = gson.fromJson(data, listType);
+                                mViewMapFragment.showBerries(new ArrayList<>(locations));
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    };
+
     private Callback createBerryCB = new Callback() {
         @Override
         public void onFailure(Call call, IOException e) {
@@ -172,7 +248,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
         @Override
         public void onResponse(Call call, Response response) throws IOException {
             System.out.println(response);
-            mMembaClient.getBerries(mAccount, mGetBerriesCB);
+            mMembaClient.getAccountBerries(mAccount, mGetAccountBerriesCB);
         }
     };
 
@@ -201,8 +277,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
         permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
         permissionUtils.checkPermission(permissions, "Need GPS permission for getting your location", 1);
 
-        mClientId = getIntent().getStringExtra("SIGNIN_CLIENTID");
-        mMembaClient = new MembaClient(mClientId);
+        mMembaClient = new MembaClient(GoogleClientId);
 
         // Synchronized
         googleAPISetup();
@@ -216,14 +291,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
     }
 
     private synchronized void googleAPISetup() {
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestProfile()
-                .requestEmail()
-                .requestIdToken(mClientId)
-                .build();
-
         mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
@@ -473,6 +541,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
     @Override
     public void onAddBerry(Berry berry) {
         berry.setUserId(mAccount.getUserId());
+        berry.setUsername(mAccount.getUsername());
         berry.setLocation(mLastLocation);
         mMembaClient.createBerry(berry, createBerryCB);
         switchPage(Navbar.HOME);
@@ -481,5 +550,11 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
     @Override
     public void onViewMapLoaded() {
         mViewMapFragment.updateLocation(mLastLocation);
+        mMembaClient.getBerries(getBerriesCB);
+    }
+
+    @Override
+    public void onMarkerClicked(String berryId) {
+        mMembaClient.getBerry(berryId, getBerryCB);
     }
 }

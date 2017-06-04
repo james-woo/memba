@@ -12,9 +12,11 @@ import java.util.List;
 
 public class Berry implements Serializable
 {
+    // TODO: Add public/private functionality
 
     @SerializedName("_id") @Expose private String mId;
     @SerializedName("userId") @Expose private String mUserId;
+    @SerializedName("userName") @Expose private String mUsername;
     @SerializedName("entries") @Expose private List<Entry> mEntries = null;
     @SerializedName("createDate") @Expose private String mCreateDate;
     @SerializedName("updateDate") @Expose private String mUpdateDate;
@@ -33,23 +35,26 @@ public class Berry implements Serializable
      * @param id
      * @param location
      * @param userId
+     * @param username
      * @param entries
      * @param createDate
      */
-    public Berry(String id, String userId, List<Entry> entries, String createDate, String updateDate, Location location) {
+    public Berry(String id, String userId, String username, List<Entry> entries, String createDate, String updateDate, Location location) {
         super();
         this.mId = id;
         this.mUserId = userId;
+        this.mUsername = username;
         this.mEntries = entries;
         this.mCreateDate = createDate;
         this.mUpdateDate = updateDate;
         this.mLocation = location;
     }
 
-    public Berry(String id, String userId, Entry entry, String createDate, String updateDate, Location location) {
+    public Berry(String id, String userId, String username, Entry entry, String createDate, String updateDate, Location location) {
         super();
         this.mId = id;
         this.mUserId = userId;
+        this.mUsername = username;
         this.mEntries = new ArrayList<Entry>();
         this.mEntries.add(entry);
         this.mCreateDate = createDate;
@@ -67,6 +72,19 @@ public class Berry implements Serializable
 
     public Berry withId(String id) {
         this.mId = id;
+        return this;
+    }
+
+    public String getUsername() {
+        return mUsername;
+    }
+
+    public void setUsername(String username) {
+        this.mUsername = username;
+    }
+
+    public Berry withUsername(String username) {
+        this.mUsername = username;
         return this;
     }
 
@@ -146,6 +164,6 @@ public class Berry implements Serializable
 
     public static Berry createBerry(String title, String image, String text) {
         String date = String.valueOf(new Date().getTime());
-        return new Berry(null, null, new Entry(title, date, image, text), date, date, null);
+        return new Berry(null, null, null, new Entry(title, date, image, text), date, date, null);
     }
 }

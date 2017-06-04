@@ -1,12 +1,11 @@
 package com.james.memba.map;
 
-import android.Manifest;
 import android.content.Context;
-import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.Bundle;
 import android.app.Fragment;
-import android.support.v4.app.ActivityCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,13 +16,20 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.james.memba.R;
+import com.james.memba.model.BerryLocation;
 
-public class ViewMapFragment extends Fragment implements OnMapReadyCallback {
+import java.util.ArrayList;
+
+public class ViewMapFragment extends Fragment implements OnMapReadyCallback,
+        GoogleMap.OnMarkerClickListener {
 
     private OnViewMapLoadedListener mViewMapLoadedListener;
+    private OnMarkerClickedListener mMarkerClickedListener;
 
     private MapView mMapView;
     private GoogleMap mGoogleMap;
@@ -107,12 +113,47 @@ public class ViewMapFragment extends Fragment implements OnMapReadyCallback {
             // ignore error
         }
 
+        mGoogleMap.setOnMarkerClickListener(this);
+
         mapLoaded();
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        markerClicked(marker.getTitle());
+        return true;
+    }
+
+    public void showBerries(ArrayList<BerryLocation> locations) {
+        for (BerryLocation l : locations) {
+            LatLng pos = new LatLng(l.getLocation().lat, l.getLocation().lng);
+            MarkerOptions m = new MarkerOptions();
+            m.icon(BitmapDescriptorFactory.fromResource(R.drawable.point));
+            m.title(l.getId());
+            m.position(pos);
+            mGoogleMap.addMarker(m);
+        }
+    }
+
+    public void updateLocation(Location location) {
+        mLocation = location;
+
+        // Zoom map to my location
+        if (mGoogleMap.isMyLocationEnabled()) {
+            CameraUpdate update = CameraUpdateFactory.newLatLngZoom(new LatLng(mLocation.getLatitude(), mLocation.getLongitude()), 15);
+            mGoogleMap.moveCamera(update);
+        }
     }
 
     private void mapLoaded() {
         if (mViewMapLoadedListener != null) {
             mViewMapLoadedListener.onViewMapLoaded();
+        }
+    }
+
+    private void markerClicked(String berryId) {
+        if (mMarkerClickedListener != null) {
+            mMarkerClickedListener.onMarkerClicked(berryId);
         }
     }
 
@@ -125,26 +166,27 @@ public class ViewMapFragment extends Fragment implements OnMapReadyCallback {
             throw new RuntimeException(context.toString()
                     + " must implement OnViewMapLoadedListener");
         }
+
+        if (context instanceof OnMarkerClickedListener) {
+            mMarkerClickedListener = (OnMarkerClickedListener) context;
+        } else {
+            throw new RuntimeException(context.toString()
+                    + " must implement OnMarkerClickedListener");
+        }
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
         mViewMapLoadedListener = null;
-    }
-
-    public void updateLocation(Location location) {
-        mLocation = location;
-
-        // Zoom map to my location
-        if (mGoogleMap.isMyLocationEnabled()) {
-            System.out.println(mLocation);
-            CameraUpdate update = CameraUpdateFactory.newLatLngZoom(new LatLng(mLocation.getLatitude(), mLocation.getLongitude()), 15);
-            mGoogleMap.moveCamera(update);
-        }
+        mMarkerClickedListener = null;
     }
 
     public interface OnViewMapLoadedListener {
         void onViewMapLoaded();
+    }
+
+    public interface OnMarkerClickedListener {
+        void onMarkerClicked(String berryId);
     }
 }

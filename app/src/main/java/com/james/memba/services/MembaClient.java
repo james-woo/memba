@@ -44,8 +44,10 @@ public class MembaClient {
         mHttpClient.newCall(request).enqueue(cb);
     }
 
-    public void createAccount(String id) {
-        String postBody = "{\"userId\":" + id + ", \"berries\":\"[]\"}";
+    public void createAccount(Account account) {
+        Gson gson = new Gson();
+        String postBody = gson.toJson(account);
+
         try {
             Request request = new Request.Builder()
                     .url(mBaseUrl + "users/")
@@ -61,7 +63,25 @@ public class MembaClient {
         }
     }
 
-    public void getBerries(Account account, Callback cb) {
+    public void updateAccountUsername(Account account) {
+        String postBody = "{\"userName\":" + account.getUsername() + "}";
+
+        try {
+            Request request = new Request.Builder()
+                    .url(mBaseUrl + "users/")
+                    .put(RequestBody.create(MediaType.parse("application/json"), postBody))
+                    .build();
+
+            Response response = mHttpClient.newCall(request).execute();
+            if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+
+            System.out.println(response.body().string());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void getAccountBerries(Account account, Callback cb) {
         Request request = new Request.Builder()
                 .url(mBaseUrl + "users/" + account.getUserId() + "/berries")
                 .get()
@@ -83,32 +103,13 @@ public class MembaClient {
         mHttpClient.newCall(request).enqueue(cb);
     }
 
-    public Berry getBerry(String berryId) {
-        Berry berry = null;
+    public void getBerry(String berryId, Callback cb) {
+        Request request = new Request.Builder()
+                .url(mBaseUrl + "berries/" + berryId)
+                .get()
+                .build();
 
-        try {
-            Request request = new Request.Builder()
-                    .url(mBaseUrl + "berry/" + berryId)
-                    .get()
-                    .build();
-            Response responses = null;
-
-            try {
-                responses = mHttpClient.newCall(request).execute();
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            String data = responses.body().string();
-
-            berry = Berry.parseJSON(data);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return berry;
+        mHttpClient.newCall(request).enqueue(cb);
     }
 
     public void createBerry(Berry berry, Callback cb) {
