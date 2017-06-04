@@ -26,10 +26,10 @@ import com.james.memba.model.BerryLocation;
 import java.util.ArrayList;
 
 public class ViewMapFragment extends Fragment implements OnMapReadyCallback,
-        GoogleMap.OnMarkerClickListener {
+        GoogleMap.OnMarkerClickListener,
+        GoogleMap.OnMyLocationButtonClickListener{
 
-    private OnViewMapLoadedListener mViewMapLoadedListener;
-    private OnMarkerClickedListener mMarkerClickedListener;
+    private ViewMapListener mViewMapListener;
 
     private MapView mMapView;
     private GoogleMap mGoogleMap;
@@ -114,6 +114,7 @@ public class ViewMapFragment extends Fragment implements OnMapReadyCallback,
         }
 
         mGoogleMap.setOnMarkerClickListener(this);
+        mGoogleMap.setOnMyLocationButtonClickListener(this);
 
         mapLoaded();
     }
@@ -121,6 +122,12 @@ public class ViewMapFragment extends Fragment implements OnMapReadyCallback,
     @Override
     public boolean onMarkerClick(Marker marker) {
         markerClicked(marker.getTitle());
+        return true;
+    }
+
+    @Override
+    public boolean onMyLocationButtonClick() {
+        myLocationClicked();
         return true;
     }
 
@@ -146,47 +153,43 @@ public class ViewMapFragment extends Fragment implements OnMapReadyCallback,
     }
 
     private void mapLoaded() {
-        if (mViewMapLoadedListener != null) {
-            mViewMapLoadedListener.onViewMapLoaded();
+        if (mViewMapListener != null) {
+            mViewMapListener.onViewMapLoaded();
         }
     }
 
     private void markerClicked(String berryId) {
-        if (mMarkerClickedListener != null) {
-            mMarkerClickedListener.onMarkerClicked(berryId);
+        if (mViewMapListener != null) {
+            mViewMapListener.onMarkerClicked(berryId);
+        }
+    }
+
+    private void myLocationClicked() {
+        if (mViewMapListener != null) {
+            mViewMapListener.onMyLocationClicked();
         }
     }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof OnViewMapLoadedListener) {
-            mViewMapLoadedListener = (OnViewMapLoadedListener) context;
+        if (context instanceof ViewMapListener) {
+            mViewMapListener = (ViewMapListener) context;
         } else {
             throw new RuntimeException(context.toString()
-                    + " must implement OnViewMapLoadedListener");
-        }
-
-        if (context instanceof OnMarkerClickedListener) {
-            mMarkerClickedListener = (OnMarkerClickedListener) context;
-        } else {
-            throw new RuntimeException(context.toString()
-                    + " must implement OnMarkerClickedListener");
+                    + " must implement ViewMapListener");
         }
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
-        mViewMapLoadedListener = null;
-        mMarkerClickedListener = null;
+        mViewMapListener = null;
     }
 
-    public interface OnViewMapLoadedListener {
+    public interface ViewMapListener {
         void onViewMapLoaded();
-    }
-
-    public interface OnMarkerClickedListener {
         void onMarkerClicked(String berryId);
+        void onMyLocationClicked();
     }
 }

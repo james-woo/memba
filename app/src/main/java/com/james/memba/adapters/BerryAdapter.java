@@ -27,6 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class BerryAdapter extends BaseAdapter {
     private List<Berry> mBerries;
     private Context mContext;
+    private BerryAdapterListener listener;
 
     public BerryAdapter(List<Berry> berries, Context context) {
         setList(berries);
@@ -58,7 +59,7 @@ public class BerryAdapter extends BaseAdapter {
     }
 
     @Override
-    public View getView(int i, View view, ViewGroup viewGroup) {
+    public View getView(final int i, View view, ViewGroup viewGroup) {
         View rowView = view;
         LayoutInflater inflater;
         if (rowView == null) {
@@ -78,6 +79,16 @@ public class BerryAdapter extends BaseAdapter {
 
             TextView dateTV = (TextView) rowView.findViewById(R.id.date);
             dateTV.setText(DateUtil.longToDate(Long.parseLong(berry.getUpdateDate())));
+
+            TextView addTV = (TextView) rowView.findViewById(R.id.add);
+            addTV.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (listener != null) {
+                        listener.onAddClicked(i);
+                    }
+                }
+            });
         }
 
         return rowView;
@@ -114,6 +125,14 @@ public class BerryAdapter extends BaseAdapter {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public void setOnAddClickListener(BerryAdapterListener listener) {
+        this.listener = listener;
+    }
+
+    public interface BerryAdapterListener {
+        void onAddClicked(int position);
     }
 
 }

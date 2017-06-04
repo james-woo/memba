@@ -162,8 +162,8 @@ public class Berry implements Serializable
         return gson.fromJson(response, Berry.class);
     }
 
-    public static Berry createBerry(String title, String image, String text) {
+    public static Berry createBerry(Entry entry) {
         String date = String.valueOf(new Date().getTime());
-        return new Berry(null, null, null, new Entry(title, date, image, text), date, date, null);
+        return new Berry(null, null, null, entry, date, date, null);
     }
 }

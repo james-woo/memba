@@ -5,6 +5,7 @@ import android.support.annotation.Nullable;
 import com.google.gson.Gson;
 import com.james.memba.model.Account;
 import com.james.memba.model.Berry;
+import com.james.memba.model.Entry;
 
 import java.io.IOException;
 
@@ -64,11 +65,12 @@ public class MembaClient {
     }
 
     public void updateAccountUsername(Account account) {
-        String postBody = "{\"userName\":" + account.getUsername() + "}";
+        Gson gson = new Gson();
+        String postBody = gson.toJson(account);
 
         try {
             Request request = new Request.Builder()
-                    .url(mBaseUrl + "users/")
+                    .url(mBaseUrl + "users/" + account.getUserId())
                     .put(RequestBody.create(MediaType.parse("application/json"), postBody))
                     .build();
 
@@ -119,6 +121,18 @@ public class MembaClient {
         Request request = new Request.Builder()
                 .url(mBaseUrl + "berries/")
                 .post(RequestBody.create(MediaType.parse("application/json"), postBody))
+                .build();
+
+        mHttpClient.newCall(request).enqueue(cb);
+    }
+
+    public void updateBerry(String berryId, Entry entry, Callback cb) {
+        Gson gson = new Gson();
+        String postBody = gson.toJson(entry);
+
+        Request request = new Request.Builder()
+                .url(mBaseUrl + "berries/" + berryId)
+                .put(RequestBody.create(MediaType.parse("application/json"), postBody))
                 .build();
 
         mHttpClient.newCall(request).enqueue(cb);

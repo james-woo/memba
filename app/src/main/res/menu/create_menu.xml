@@ -2,8 +2,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.james.memba.addberry.AddEntryFragment">
+    tools:context="com.james.memba.addberry.CreateBerryFragment">
     <item android:id="@+id/action_add"
-        android:title="Add"
+        android:title="Create"
         app:showAsAction="always"/>
 </menu>

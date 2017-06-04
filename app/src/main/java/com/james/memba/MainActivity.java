@@ -7,7 +7,6 @@ import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.location.Location;
-import android.provider.Contacts;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -21,7 +20,6 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.api.Auth;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -33,22 +31,20 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.google.android.gms.plus.Plus;
-import com.google.android.gms.plus.model.people.Person;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import com.james.memba.addberry.AddBerryFragment;
+import com.james.memba.addberry.AddEntryFragment;
+import com.james.memba.addberry.CreateBerryFragment;
 import com.james.memba.home.HomeFragment;
 import com.james.memba.map.ViewBerryDialogFragment;
 import com.james.memba.map.ViewMapFragment;
 import com.james.memba.model.Account;
 import com.james.memba.model.Berry;
 import com.james.memba.model.BerryLocation;
+import com.james.memba.model.Entry;
 import com.james.memba.services.MembaClient;
 import com.james.memba.utils.PermissionUtils;
-
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -61,11 +57,10 @@ import okhttp3.Response;
 
 import static com.james.memba.utils.KeyUtil.GoogleClientId;
 
-public class MainActivity extends AppCompatActivity implements HomeFragment.OnHomeLoadedListener,
-        AddBerryFragment.OnAddBerryLoadedListener,
-        AddBerryFragment.OnAddBerryListener,
-        ViewMapFragment.OnViewMapLoadedListener,
-        ViewMapFragment.OnMarkerClickedListener,
+public class MainActivity extends AppCompatActivity implements HomeFragment.HomeListener,
+        AddEntryFragment.AddEntryListener,
+        CreateBerryFragment.CreateBerryListener,
+        ViewMapFragment.ViewMapListener,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
         ActivityCompat.OnRequestPermissionsResultCallback,
@@ -79,7 +74,8 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
 
     // Fragments
     private HomeFragment mHomeFragment;
-    private AddBerryFragment mAddBerryFragment;
+    private CreateBerryFragment mCreateBerryFragment;
+    private AddEntryFragment mAddEntryFragment;
     private ViewMapFragment mViewMapFragment;
 
     // Navbar
@@ -87,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
     private ImageButton mAddButton;
     private ImageButton mMapButton;
 
-    private enum Navbar {HOME, ADD, MAP}
+    private enum Navbar {HOME, ADD, CREATE, MAP}
     private Navbar mCurrentPage = Navbar.HOME;
     private Navbar mLastPage = Navbar.HOME;
 
@@ -113,14 +109,15 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
             String data = response.body().string();
 
             try {
-                JSONObject object = new JSONObject(data);
-                mAccount = new Account(object.getString("userId"));
+                Gson gson = new Gson();
+                mAccount = gson.fromJson(data, Account.class);
                 if (response.isSuccessful()) {
                     // Retrieve account information
                     mMembaClient.getAccountBerries(mAccount, mGetAccountBerriesCB);
                     String username = getIntent().getStringExtra("SIGNIN_DISPLAYNAME");
                     if (!mAccount.getUsername().equals(username)) {
                         // update user account
+                        mAccount.setUsername(username);
                         mMembaClient.updateAccountUsername(mAccount);
                     }
                 } else {
@@ -247,7 +244,18 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
 
         @Override
         public void onResponse(Call call, Response response) throws IOException {
-            System.out.println(response);
+            mMembaClient.getAccountBerries(mAccount, mGetAccountBerriesCB);
+        }
+    };
+
+    private Callback updateBerryCB = new Callback() {
+        @Override
+        public void onFailure(Call call, IOException e) {
+
+        }
+
+        @Override
+        public void onResponse(Call call, Response response) throws IOException {
             mMembaClient.getAccountBerries(mAccount, mGetAccountBerriesCB);
         }
     };
@@ -267,7 +275,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
 
         // Load all fragments
         mHomeFragment = HomeFragment.newInstance();
-        mAddBerryFragment = AddBerryFragment.newInstance();
+        mCreateBerryFragment = CreateBerryFragment.newInstance();
         mViewMapFragment = ViewMapFragment.newInstance();
         switchPage(Navbar.HOME);
 
@@ -364,8 +372,8 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
         mAddButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mCurrentPage != Navbar.ADD) {
-                    switchPage(Navbar.ADD);
+                if (mCurrentPage != Navbar.CREATE) {
+                    switchPage(Navbar.CREATE);
                 }
             }
         });
@@ -395,14 +403,23 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
                         .commit();
                 mCurrentPage = Navbar.HOME;
                 break;
+            case CREATE:
+                mHomeButton.setImageDrawable(getResources().getDrawable(R.drawable.home_unselected, null));
+                mAddButton.setImageDrawable(getResources().getDrawable(R.drawable.add_selected, null));
+                mMapButton.setImageDrawable(getResources().getDrawable(R.drawable.map_unselected, null));
+                ft.replace(R.id.contentFrame, mCreateBerryFragment)
+                        .addToBackStack(mCurrentPage.name())
+                        .commit();
+
+                mCurrentPage = Navbar.CREATE;
+                break;
             case ADD:
                 mHomeButton.setImageDrawable(getResources().getDrawable(R.drawable.home_unselected, null));
                 mAddButton.setImageDrawable(getResources().getDrawable(R.drawable.add_selected, null));
                 mMapButton.setImageDrawable(getResources().getDrawable(R.drawable.map_unselected, null));
-                ft.replace(R.id.contentFrame, mAddBerryFragment)
+                ft.replace(R.id.contentFrame, mAddEntryFragment)
                         .addToBackStack(mCurrentPage.name())
                         .commit();
-
                 mCurrentPage = Navbar.ADD;
                 break;
             case MAP:
@@ -534,17 +551,33 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
     }
 
     @Override
-    public void onAddBerryLoaded() {
+    public void onAddEntry(Berry berry) {
+        mAddEntryFragment = AddEntryFragment.newInstance(berry);
+        switchPage(Navbar.ADD);
+    }
+
+    @Override
+    public void onAddEntryLoaded() {
 
     }
 
     @Override
-    public void onAddBerry(Berry berry) {
+    public void onCreateBerryLoaded() {
+
+    }
+
+    @Override
+    public void onCreateBerry(Berry berry) {
         berry.setUserId(mAccount.getUserId());
         berry.setUsername(mAccount.getUsername());
         berry.setLocation(mLastLocation);
         mMembaClient.createBerry(berry, createBerryCB);
         switchPage(Navbar.HOME);
+    }
+
+    @Override
+    public void onUpdateBerry(String berryId, Entry entry) {
+        mMembaClient.updateBerry(berryId, entry, updateBerryCB);
     }
 
     @Override
@@ -556,5 +589,11 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
     @Override
     public void onMarkerClicked(String berryId) {
         mMembaClient.getBerry(berryId, getBerryCB);
+    }
+
+    @Override
+    public void onMyLocationClicked() {
+        getLocation();
+        mViewMapFragment.updateLocation(mLastLocation);
     }
 }

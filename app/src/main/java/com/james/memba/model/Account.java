@@ -9,7 +9,7 @@ public class Account implements Serializable {
     @SerializedName("_id") @Expose private String mId;
     @SerializedName("userId") @Expose private String mUserId;
     @SerializedName("userName") @Expose private String mUsername;
-    @SerializedName("createDate") @Expose private int mCeateDate;
+    @SerializedName("createDate") @Expose private String mCreateDate;
     @SerializedName("berries") @Expose private List<Object> mBerries = null;
 
     private final static long serialVersionUID = -6126086970311859495L;
@@ -64,16 +64,16 @@ public class Account implements Serializable {
         return this;
     }
 
-    public int getCreateDate() {
-        return mCeateDate;
+    public String getCreateDate() {
+        return mCreateDate;
     }
 
-    public void setCreateDate(int createDate) {
-        this.mCeateDate = createDate;
+    public void setCreateDate(String createDate) {
+        this.mCreateDate = createDate;
     }
 
-    public Account withCreateDate(int createDate) {
-        this.mCeateDate = createDate;
+    public Account withCreateDate(String createDate) {
+        this.mCreateDate = createDate;
         return this;
     }
 

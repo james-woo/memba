@@ -27,7 +27,7 @@ public class HomeFragment extends Fragment {
     private TextView mNoBerryMainView;
     private ListView mBerryList;
 
-    private OnHomeLoadedListener mHomeLoadedListener;
+    private HomeListener mHomeListener;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -43,6 +43,12 @@ public class HomeFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         mListAdapter = new BerryAdapter(new ArrayList<Berry>(0), getContext());
+        mListAdapter.setOnAddClickListener(new BerryAdapter.BerryAdapterListener() {
+            @Override
+            public void onAddClicked(int position) {
+                addEntry(mListAdapter.getItem(position));
+            }
+        });
     }
 
     @Nullable
@@ -81,8 +87,14 @@ public class HomeFragment extends Fragment {
     }
 
     public void homeLoaded() {
-        if (mHomeLoadedListener != null) {
-            mHomeLoadedListener.onHomeLoaded();
+        if (mHomeListener != null) {
+            mHomeListener.onHomeLoaded();
+        }
+    }
+
+    public void addEntry(Berry berry) {
+        if (mHomeListener != null) {
+            mHomeListener.onAddEntry(berry);
         }
     }
 
@@ -93,21 +105,22 @@ public class HomeFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof OnHomeLoadedListener) {
-            mHomeLoadedListener = (OnHomeLoadedListener) context;
+        if (context instanceof HomeListener) {
+            mHomeListener = (HomeListener) context;
         } else {
             throw new RuntimeException(context.toString()
-                    + " must implement OnHomeLoadedListener");
+                    + " must implement HomeListener");
         }
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
-        mHomeLoadedListener = null;
+        mHomeListener = null;
     }
 
-    public interface OnHomeLoadedListener {
+    public interface HomeListener {
         void onHomeLoaded();
+        void onAddEntry(Berry berry);
     }
 }
