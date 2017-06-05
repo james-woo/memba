@@ -35,13 +35,6 @@ public class Entry implements Serializable{
         this.mText = text;
     }
 
-    public Entry(String title, String image, String text) {
-        super();
-        this.mTitle = title;
-        this.mImage = image;
-        this.mText = text;
-    }
-
     public String getTitle() {
         return mTitle;
     }

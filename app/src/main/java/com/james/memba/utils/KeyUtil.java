@@ -6,4 +6,8 @@ public class KeyUtil {
 
     public static final String ImgurCliendId = "b07cd79fd5ee807";
     public static final String ImgurClientSecret = "16f6352c3e9dd050fb265630bf55f87be5f7c415";
+
+    public static String getImgurClientAuth() {
+        return "Client-ID " + ImgurCliendId;
+    }
 }

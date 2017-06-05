@@ -48,6 +48,7 @@ dependencies {
     compile "com.squareup.okhttp3:okhttp:$rootProject.okhttpVersion"
     compile "com.squareup.picasso:picasso:$rootProject.picassoVersion"
     compile "com.google.code.gson:gson:$rootProject.gsonVersion"
+    compile "com.theartofdev.edmodo:android-image-cropper:$rootProject.androidImageCropperVersion"
     // Dependencies for local unit tests
     testCompile "junit:junit:$rootProject.ext.junitVersion"
     testCompile "org.mockito:mockito-all:$rootProject.ext.mockitoVersion"

@@ -4,9 +4,13 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -43,9 +47,12 @@ import com.james.memba.model.Account;
 import com.james.memba.model.Berry;
 import com.james.memba.model.BerryLocation;
 import com.james.memba.model.Entry;
+import com.james.memba.services.ImgurClient;
 import com.james.memba.services.MembaClient;
+import com.james.memba.utils.LocationUtil;
 import com.james.memba.utils.PermissionUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -61,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
         AddEntryFragment.AddEntryListener,
         CreateBerryFragment.CreateBerryListener,
         ViewMapFragment.ViewMapListener,
+        ViewBerryDialogFragment.ViewBerryListener,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
         ActivityCompat.OnRequestPermissionsResultCallback,
@@ -88,6 +96,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
     private Navbar mLastPage = Navbar.HOME;
 
     private MembaClient mMembaClient;
+    private ImgurClient mImgurClient;
 
     private ArrayList<String> permissions = new ArrayList<>();
     private PermissionUtils permissionUtils;
@@ -286,6 +295,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
         permissionUtils.checkPermission(permissions, "Need GPS permission for getting your location", 1);
 
         mMembaClient = new MembaClient(GoogleClientId);
+        mImgurClient = new ImgurClient();
 
         // Synchronized
         googleAPISetup();
@@ -393,6 +403,11 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
         FragmentTransaction ft = fm.beginTransaction();
         mLastPage = mCurrentPage;
 
+        if (n != Navbar.ADD && mAddEntryFragment != null) {
+            getFragmentManager().beginTransaction().detach(mAddEntryFragment).commit();
+            mAddEntryFragment = null;
+        }
+
         switch (n) {
             case HOME:
                 mHomeButton.setImageDrawable(getResources().getDrawable(R.drawable.home_selected, null));
@@ -436,6 +451,10 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
 
     @Override
     public void onStart() {
+        if (!mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.connect();
+        }
+
         super.onStart();
     }
 
@@ -551,7 +570,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
     }
 
     @Override
-    public void onAddEntry(Berry berry) {
+    public void onAddEntryTo(Berry berry) {
         mAddEntryFragment = AddEntryFragment.newInstance(berry);
         switchPage(Navbar.ADD);
     }
@@ -563,21 +582,50 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
 
     @Override
     public void onCreateBerryLoaded() {
-
+        getLocation();
+        String location = LocationUtil.getAddress(this, mLastLocation);
+        mCreateBerryFragment.showBerryHeader(mAccount.getUsername(), location);
     }
 
     @Override
-    public void onCreateBerry(Berry berry) {
+    public void onCreateBerry(final Berry berry) {
         berry.setUserId(mAccount.getUserId());
         berry.setUsername(mAccount.getUsername());
         berry.setLocation(mLastLocation);
-        mMembaClient.createBerry(berry, createBerryCB);
+        final Entry entry = berry.getEntries().get(0);
+        if (entry.getImage() != null) {
+            final File image = new File(entry.getImage());
+            // update entry with imgur url
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    entry.setImage(mImgurClient.postImage(image));
+                    berry.getEntries().set(0, entry);
+                    mMembaClient.createBerry(berry, updateBerryCB);
+                }
+            }).start();
+        } else {
+            mMembaClient.createBerry(berry, updateBerryCB);
+        }
         switchPage(Navbar.HOME);
     }
 
     @Override
-    public void onUpdateBerry(String berryId, Entry entry) {
-        mMembaClient.updateBerry(berryId, entry, updateBerryCB);
+    public void onUpdateBerry(final String berryId, final Entry entry) {
+        if (entry.getImage() != null) {
+            final File image = new File(entry.getImage());
+            // update entry with imgur url
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    entry.setImage(mImgurClient.postImage(image));
+                    mMembaClient.updateBerry(berryId, entry, updateBerryCB);
+                }
+            }).start();
+        } else {
+            mMembaClient.updateBerry(berryId, entry, updateBerryCB);
+        }
+        switchPage(Navbar.HOME);
     }
 
     @Override

@@ -114,6 +114,15 @@ public class Berry implements Serializable
         return this;
     }
 
+    public void addEntry(Entry entry) {
+        if (mEntries != null) {
+            mEntries.add(entry);
+        } else {
+            mEntries = new ArrayList<>();
+            mEntries.add(entry);
+        }
+    }
+
     public String getUpdateDate() {
         return mUpdateDate;
     }

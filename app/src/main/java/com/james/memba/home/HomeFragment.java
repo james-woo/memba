@@ -41,12 +41,11 @@ public class HomeFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         mListAdapter = new BerryAdapter(new ArrayList<Berry>(0), getContext());
         mListAdapter.setOnAddClickListener(new BerryAdapter.BerryAdapterListener() {
             @Override
             public void onAddClicked(int position) {
-                addEntry(mListAdapter.getItem(position));
+                addEntryTo(mListAdapter.getItem(position));
             }
         });
     }
@@ -92,9 +91,9 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    public void addEntry(Berry berry) {
+    public void addEntryTo(Berry berry) {
         if (mHomeListener != null) {
-            mHomeListener.onAddEntry(berry);
+            mHomeListener.onAddEntryTo(berry);
         }
     }
 
@@ -121,6 +120,6 @@ public class HomeFragment extends Fragment {
 
     public interface HomeListener {
         void onHomeLoaded();
-        void onAddEntry(Berry berry);
+        void onAddEntryTo(Berry berry);
     }
 }

@@ -16,6 +16,7 @@ import com.james.memba.model.Berry;
 import com.james.memba.model.Entry;
 import com.james.memba.model.Location;
 import com.james.memba.utils.DateUtil;
+import com.james.memba.utils.LocationUtil;
 import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
@@ -61,35 +62,39 @@ public class BerryAdapter extends BaseAdapter {
     @Override
     public View getView(final int i, View view, ViewGroup viewGroup) {
         View rowView = view;
-        LayoutInflater inflater;
+        LayoutInflater inflater = null;
         if (rowView == null) {
             inflater = LayoutInflater.from(viewGroup.getContext());
             rowView = inflater.inflate(R.layout.berry_item, viewGroup, false);
+        } else {
+            rowView = view;
+        }
 
-            final Berry berry = getItem(i);
+        final Berry berry = getItem(i);
 
-            TextView usernameTV = (TextView) rowView.findViewById(R.id.username);
-            usernameTV.setText(berry.getUsername());
+        TextView usernameTV = (TextView) rowView.findViewById(R.id.username);
+        usernameTV.setText(berry.getUsername());
 
-            TextView locationTV = (TextView) rowView.findViewById(R.id.location);
-            locationTV.setText(getAddress(berry.getLocation()));
+        TextView locationTV = (TextView) rowView.findViewById(R.id.location);
+        locationTV.setText(LocationUtil.getAddress(mContext, berry.getLocation()));
 
+        if (inflater != null) {
             LinearLayout entryLL = (LinearLayout) rowView.findViewById(R.id.entry_list);
             insertEntries(entryLL, inflater, viewGroup, berry.getEntries());
-
-            TextView dateTV = (TextView) rowView.findViewById(R.id.date);
-            dateTV.setText(DateUtil.longToDate(Long.parseLong(berry.getUpdateDate())));
-
-            TextView addTV = (TextView) rowView.findViewById(R.id.add);
-            addTV.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (listener != null) {
-                        listener.onAddClicked(i);
-                    }
-                }
-            });
         }
+
+        TextView dateTV = (TextView) rowView.findViewById(R.id.date);
+        dateTV.setText(DateUtil.longToDate(Long.parseLong(berry.getUpdateDate())));
+
+        TextView addTV = (TextView) rowView.findViewById(R.id.add);
+        addTV.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (listener != null) {
+                    listener.onAddClicked(i);
+                }
+            }
+        });
 
         return rowView;
     }
@@ -104,27 +109,17 @@ public class BerryAdapter extends BaseAdapter {
             dateTV.setText(DateUtil.longToDate(Long.parseLong(e.getDate())));
 
             ImageView image = (ImageView) child.findViewById(R.id.image);
-            Picasso.with(mContext).load(e.getImage()).into(image);
+            image.setImageBitmap(null);
+            String path = e.getImage();
+            if (path != null && !path.isEmpty()) {
+                Picasso.with(mContext).load(path).into(image);
+            }
 
             TextView textTV = (TextView) child.findViewById(R.id.text);
             textTV.setText(e.getText());
 
             ll.addView(child);
         }
-    }
-
-    private String getAddress(Location location) {
-        Geocoder geocoder;
-        List<Address> addresses;
-        geocoder = new Geocoder(mContext, Locale.getDefault());
-
-        try {
-            addresses = geocoder.getFromLocation(location.lat, location.lng, 1);
-            return addresses.get(0).getLocality();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     public void setOnAddClickListener(BerryAdapterListener listener) {

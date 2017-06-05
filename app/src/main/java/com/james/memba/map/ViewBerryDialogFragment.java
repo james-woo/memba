@@ -2,8 +2,7 @@ package com.james.memba.map;
 
 import android.app.Dialog;
 import android.app.DialogFragment;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
+import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
@@ -12,8 +11,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.view.WindowManager;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -31,10 +28,15 @@ import java.util.Locale;
 
 public class ViewBerryDialogFragment extends DialogFragment {
 
-    TextView mUserNameTV;
-    TextView mLocationTV;
-    LinearLayout mEntriesLL;
-    TextView mDateTV;
+    private ViewBerryListener mViewBerryListener;
+
+    private TextView mUserNameTV;
+    private TextView mLocationTV;
+    private LinearLayout mEntriesLL;
+    private TextView mDateTV;
+    private TextView mAddTV;
+
+    private Berry mBerry;
 
     public ViewBerryDialogFragment() {
 
@@ -50,7 +52,7 @@ public class ViewBerryDialogFragment extends DialogFragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.berry_item, container);
+        View view = inflater.inflate(R.layout.view_berry_fragment, container);
 
         mUserNameTV = (TextView) view.findViewById(R.id.username);
         mLocationTV = (TextView) view.findViewById(R.id.location);
@@ -58,13 +60,21 @@ public class ViewBerryDialogFragment extends DialogFragment {
         mDateTV = (TextView) view.findViewById(R.id.date);
 
         // Fetch arguments from bundle and set title
-        Berry berry = (Berry) getArguments().getSerializable("BERRY");
+        mBerry = (Berry) getArguments().getSerializable("BERRY");
 
-        mUserNameTV.setText(berry.getUsername());
-        mLocationTV.setText(getAddress(berry.getLocation()));
-        mDateTV.setText(DateUtil.longToDate(Long.parseLong(berry.getUpdateDate())));
+        mUserNameTV.setText(mBerry.getUsername());
+        mLocationTV.setText(getAddress(mBerry.getLocation()));
+        mDateTV.setText(DateUtil.longToDate(Long.parseLong(mBerry.getUpdateDate())));
 
-        insertEntries(mEntriesLL, inflater, container, berry.getEntries());
+        insertEntries(mEntriesLL, inflater, container, mBerry.getEntries());
+
+        mAddTV = (TextView) view.findViewById(R.id.add);
+        mAddTV.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addEntryTo(mBerry);
+            }
+        });
 
         return view;
     }
@@ -100,7 +110,11 @@ public class ViewBerryDialogFragment extends DialogFragment {
             dateTV.setText(DateUtil.longToDate(Long.parseLong(e.getDate())));
 
             ImageView image = (ImageView) child.findViewById(R.id.image);
-            Picasso.with(getActivity()).load(e.getImage()).into(image);
+            image.setImageBitmap(null);
+            String path = e.getImage();
+            if (path != null && !path.isEmpty()) {
+                Picasso.with(getActivity()).load(path).into(image);
+            }
 
             TextView textTV = (TextView) child.findViewById(R.id.text);
             textTV.setText(e.getText());
@@ -121,5 +135,33 @@ public class ViewBerryDialogFragment extends DialogFragment {
             e.printStackTrace();
         }
         return null;
+    }
+
+    private void addEntryTo(Berry berry) {
+        if (mViewBerryListener != null) {
+            mViewBerryListener.onAddEntryTo(berry);
+        }
+        getDialog().dismiss();
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof ViewBerryListener) {
+            mViewBerryListener = (ViewBerryListener) context;
+        } else {
+            throw new RuntimeException(context.toString()
+                    + " must implement ViewBerryListener");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mViewBerryListener = null;
+    }
+
+    public interface ViewBerryListener {
+        void onAddEntryTo(Berry berry);
     }
 }

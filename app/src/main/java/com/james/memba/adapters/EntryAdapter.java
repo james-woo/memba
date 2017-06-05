@@ -58,21 +58,27 @@ public class EntryAdapter extends BaseAdapter {
         if (rowView == null) {
             inflater = LayoutInflater.from(viewGroup.getContext());
             rowView = inflater.inflate(R.layout.entry_item, viewGroup, false);
-
-            final Entry e = getItem(i);
-
-            TextView titleTV = (TextView) rowView.findViewById(R.id.title);
-            titleTV.setText(e.getTitle());
-
-            TextView dateTV = (TextView) rowView.findViewById(R.id.date);
-            dateTV.setText(DateUtil.longToDate(Long.parseLong(e.getDate())));
-
-            ImageView image = (ImageView) rowView.findViewById(R.id.image);
-            Picasso.with(mContext).load(e.getImage()).into(image);
-
-            TextView textTV = (TextView) rowView.findViewById(R.id.text);
-            textTV.setText(e.getText());
+        } else {
+            rowView = view;
         }
+
+        final Entry e = getItem(i);
+
+        TextView titleTV = (TextView) rowView.findViewById(R.id.title);
+        titleTV.setText(e.getTitle());
+
+        TextView dateTV = (TextView) rowView.findViewById(R.id.date);
+        dateTV.setText(DateUtil.longToDate(Long.parseLong(e.getDate())));
+
+        ImageView image = (ImageView) rowView.findViewById(R.id.image);
+        image.setImageBitmap(null);
+        String path = e.getImage();
+        if (path != null && !path.isEmpty()) {
+            Picasso.with(mContext).load(path).into(image);
+        }
+
+        TextView textTV = (TextView) rowView.findViewById(R.id.text);
+        textTV.setText(e.getText());
 
         return rowView;
     }
