@@ -36,6 +36,9 @@ public class MembaClient {
         }).build();
     }
 
+    /*
+     * Get account by id
+     */
     public void getAccount(String id, Callback cb) {
         Request request = new Request.Builder()
                 .url(mBaseUrl + "users/" + id)
@@ -45,6 +48,9 @@ public class MembaClient {
         mHttpClient.newCall(request).enqueue(cb);
     }
 
+    /*
+     * Post new account
+     */
     public void createAccount(Account account) {
         Gson gson = new Gson();
         String postBody = gson.toJson(account);
@@ -64,6 +70,9 @@ public class MembaClient {
         }
     }
 
+    /*
+     * Put new username for account, only gets called if Google+ displayname has changed
+     */
     public void updateAccountUsername(Account account) {
         Gson gson = new Gson();
         String postBody = gson.toJson(account);
@@ -83,6 +92,9 @@ public class MembaClient {
         }
     }
 
+    /*
+     * Get all berries for an associated account
+     */
     public void getAccountBerries(Account account, Callback cb) {
         Request request = new Request.Builder()
                 .url(mBaseUrl + "users/" + account.getUserId() + "/berries")
@@ -105,6 +117,9 @@ public class MembaClient {
         mHttpClient.newCall(request).enqueue(cb);
     }
 
+    /*
+     * Get berry by id
+     */
     public void getBerry(String berryId, Callback cb) {
         Request request = new Request.Builder()
                 .url(mBaseUrl + "berries/" + berryId)
@@ -114,6 +129,9 @@ public class MembaClient {
         mHttpClient.newCall(request).enqueue(cb);
     }
 
+    /*
+     * Post a new berry
+     */
     public void createBerry(Berry berry, Callback cb) {
         Gson gson = new Gson();
         String postBody = gson.toJson(berry);
@@ -126,6 +144,9 @@ public class MembaClient {
         mHttpClient.newCall(request).enqueue(cb);
     }
 
+    /*
+     * Put new entry in berry
+     */
     public void updateBerry(String berryId, Entry entry, Callback cb) {
         Gson gson = new Gson();
         String postBody = gson.toJson(entry);

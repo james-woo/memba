@@ -20,6 +20,7 @@ import com.james.memba.model.Berry;
 import com.james.memba.model.Entry;
 import com.james.memba.model.Location;
 import com.james.memba.utils.DateUtil;
+import com.james.memba.utils.LocationUtil;
 import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
@@ -63,11 +64,12 @@ public class ViewBerryDialogFragment extends DialogFragment {
         mBerry = (Berry) getArguments().getSerializable("BERRY");
 
         mUserNameTV.setText(mBerry.getUsername());
-        mLocationTV.setText(getAddress(mBerry.getLocation()));
+        mLocationTV.setText(LocationUtil.getAddress(getActivity(), mBerry.getLocation()));
         mDateTV.setText(DateUtil.longToDate(Long.parseLong(mBerry.getUpdateDate())));
 
         insertEntries(mEntriesLL, inflater, container, mBerry.getEntries());
 
+        // Allow user to add new entry to berry
         mAddTV = (TextView) view.findViewById(R.id.add);
         mAddTV.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -86,6 +88,7 @@ public class ViewBerryDialogFragment extends DialogFragment {
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
+        // Make dialog full screen
         Dialog dialog = super.onCreateDialog(savedInstanceState);
         dialog.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
         return dialog;
@@ -94,6 +97,7 @@ public class ViewBerryDialogFragment extends DialogFragment {
     @Override
     public void onStart() {
         super.onStart();
+        // Make dialog full screen
         Dialog dialog = getDialog();
         if (dialog != null) {
             dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -123,20 +127,7 @@ public class ViewBerryDialogFragment extends DialogFragment {
         }
     }
 
-    private String getAddress(Location location) {
-        Geocoder geocoder;
-        List<Address> addresses;
-        geocoder = new Geocoder(getActivity(), Locale.getDefault());
-
-        try {
-            addresses = geocoder.getFromLocation(location.lat, location.lng, 1);
-            return addresses.get(0).getLocality();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
+    // Callback when "ADD" is clicked
     private void addEntryTo(Berry berry) {
         if (mViewBerryListener != null) {
             mViewBerryListener.onAddEntryTo(berry);

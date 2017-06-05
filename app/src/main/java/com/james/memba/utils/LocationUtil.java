@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Locale;
 
 public class LocationUtil {
+
+    // Returns an approximate locality given latitude and longitude
     public static String getAddress(Context context, Location location) {
         Geocoder geocoder;
         List<Address> addresses;
@@ -25,6 +27,7 @@ public class LocationUtil {
         return null;
     }
 
+    // Returns an approximate locality given latitude and longitude
     public static String getAddress(Context context, android.location.Location location) {
         Geocoder geocoder;
         List<Address> addresses;

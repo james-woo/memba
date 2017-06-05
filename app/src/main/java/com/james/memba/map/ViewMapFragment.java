@@ -1,8 +1,6 @@
 package com.james.memba.map;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.Bundle;
 import android.app.Fragment;
@@ -107,6 +105,7 @@ public class ViewMapFragment extends Fragment implements OnMapReadyCallback,
     public void onMapReady(GoogleMap googleMap) {
         mGoogleMap = googleMap;
 
+        // Allow set my location, a button on the top right to bring map to current location
         try {
             mGoogleMap.setMyLocationEnabled(true);
         } catch (SecurityException e) {
@@ -121,6 +120,7 @@ public class ViewMapFragment extends Fragment implements OnMapReadyCallback,
 
     @Override
     public boolean onMarkerClick(Marker marker) {
+        // Berry id was stored as a title
         markerClicked(marker.getTitle());
         return true;
     }
@@ -136,12 +136,14 @@ public class ViewMapFragment extends Fragment implements OnMapReadyCallback,
             LatLng pos = new LatLng(l.getLocation().lat, l.getLocation().lng);
             MarkerOptions m = new MarkerOptions();
             m.icon(BitmapDescriptorFactory.fromResource(R.drawable.point));
+            // Store the id of the berry as a title so that it can be referenced
             m.title(l.getId());
             m.position(pos);
             mGoogleMap.addMarker(m);
         }
     }
 
+    // Main activity calls this when the users location is updated, moves view to the location
     public void updateLocation(Location location) {
         mLocation = location;
 
@@ -152,18 +154,21 @@ public class ViewMapFragment extends Fragment implements OnMapReadyCallback,
         }
     }
 
+    // Callback for when the fragment is finished loading
     private void mapLoaded() {
         if (mViewMapListener != null) {
             mViewMapListener.onViewMapLoaded();
         }
     }
 
+    // Callback when a marker is clicked, the berryId is the marker title
     private void markerClicked(String berryId) {
         if (mViewMapListener != null) {
             mViewMapListener.onMarkerClicked(berryId);
         }
     }
 
+    // Callback when the "My location" button is pressed
     private void myLocationClicked() {
         if (mViewMapListener != null) {
             mViewMapListener.onMyLocationClicked();

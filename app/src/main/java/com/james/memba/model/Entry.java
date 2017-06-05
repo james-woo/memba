@@ -7,6 +7,10 @@ import java.io.Serializable;
 import java.util.Date;
 
 public class Entry implements Serializable{
+
+    /* Entries for berries in Memba. Each entry has a title, date, image, and text.
+     */
+
     @SerializedName("title") @Expose private String mTitle;
     @SerializedName("date") @Expose private String mDate;
     @SerializedName("image") @Expose private String mImage;

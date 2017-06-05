@@ -5,6 +5,10 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 public class Location implements Serializable {
+
+    /* Location is a datastructure that only holds latitude and longitude for berries,
+     */
+
     @SerializedName("lat")
     @Expose
     public double lat;

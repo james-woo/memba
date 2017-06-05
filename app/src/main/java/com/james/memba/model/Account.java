@@ -6,6 +6,11 @@ import com.google.gson.annotations.SerializedName;
 
 public class Account implements Serializable {
 
+    /* Accounts for Memba. The userId is from Google+ api and the userName is also from Google+ api.
+     * If the userName is ever changed, it will be updated. Berries stores the id's of all the users
+     * berries.
+     */
+
     @SerializedName("_id") @Expose private String mId;
     @SerializedName("userId") @Expose private String mUserId;
     @SerializedName("userName") @Expose private String mUsername;

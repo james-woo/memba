@@ -64,6 +64,12 @@ public class CreateBerryFragment extends Fragment {
         mDateTV = (TextView) root.findViewById(R.id.date);
         mTitleET = (EditText) root.findViewById(R.id.title);
         mImageIV = (ImageView) root.findViewById(R.id.image);
+        mImageIV.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addImage();
+            }
+        });
         mTextET = (EditText) root.findViewById(R.id.description);
         mLocationTV = (TextView) root.findViewById(R.id.location);
 
@@ -97,22 +103,15 @@ public class CreateBerryFragment extends Fragment {
         return super.onOptionsItemSelected(item);
     }
 
-    private void createBerryLoaded() {
-        if (mCreateBerryListener != null) {
-            mCreateBerryListener.onCreateBerryLoaded();
-        }
-    }
-
-    private void createBerry(Entry entry) {
-        if (mCreateBerryListener != null) {
-            mCreateBerryListener.onCreateBerry(Berry.createBerry(entry));
-        }
-    }
-
     public void showBerryHeader(String username, String location) {
         mLocationTV.setText(location);
         mUsernameTV.setText(username);
         mDateTV.setText(DateUtil.longToDate(new Date().getTime()));
+    }
+
+    private void addImage() {
+        Intent intent = CropImage.activity().getIntent(getContext());
+        startActivityForResult(intent, CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE);
     }
 
     private void handleCropResult(CropImageView.CropResult result) {
@@ -131,6 +130,20 @@ public class CreateBerryFragment extends Fragment {
         if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
             CropImage.ActivityResult result = CropImage.getActivityResult(data);
             handleCropResult(result);
+        }
+    }
+
+    // Callback to let main activity know this fragment is done loading
+    private void createBerryLoaded() {
+        if (mCreateBerryListener != null) {
+            mCreateBerryListener.onCreateBerryLoaded();
+        }
+    }
+
+    // Callback to create a new berry with an entry
+    private void createBerry(Entry entry) {
+        if (mCreateBerryListener != null) {
+            mCreateBerryListener.onCreateBerry(Berry.createBerry(entry));
         }
     }
 

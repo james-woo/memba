@@ -14,6 +14,10 @@ public class Berry implements Serializable
 {
     // TODO: Add public/private functionality
 
+    /* Berries for Memba. Berries are composed of entries, and whenever an entry is inserted, the
+     * updateDate should be updated. Each berry also has exactly one location.
+     */
+
     @SerializedName("_id") @Expose private String mId;
     @SerializedName("userId") @Expose private String mUserId;
     @SerializedName("userName") @Expose private String mUsername;

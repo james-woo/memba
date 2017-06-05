@@ -103,6 +103,7 @@ public class AddEntryFragment extends Fragment {
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        // Change menu to show "ADD" instead of the three dots
         MenuItem item = menu.findItem(R.id.action_settings);
         item.setVisible(false);
         item = menu.findItem(R.id.action_sign_out);
@@ -115,6 +116,7 @@ public class AddEntryFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_add:
+                // Create a new entry and update the berry
                 String title = mTitleET.getText().toString();
                 String text = mTextET.getText().toString();
                 updateBerry(new Entry(title, String.valueOf(new Date().getTime()), mImagePath, text));
@@ -125,21 +127,8 @@ public class AddEntryFragment extends Fragment {
     }
 
     private void addImage() {
-        Intent intent = CropImage.activity()
-                .getIntent(getContext());
+        Intent intent = CropImage.activity().getIntent(getContext());
         startActivityForResult(intent, CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE);
-    }
-
-    private void addEntryLoaded() {
-        if (mAddEntryListener != null) {
-            mAddEntryListener.onAddEntryLoaded();
-        }
-    }
-
-    private void updateBerry(Entry entry) {
-        if (mAddEntryListener != null) {
-            mAddEntryListener.onUpdateBerry(mBerry.getId(), entry);
-        }
     }
 
     private void handleCropResult(CropImageView.CropResult result) {
@@ -158,6 +147,20 @@ public class AddEntryFragment extends Fragment {
         if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
             CropImage.ActivityResult result = CropImage.getActivityResult(data);
             handleCropResult(result);
+        }
+    }
+
+    // Callback to let the main activity know this fragment is done loading
+    private void addEntryLoaded() {
+        if (mAddEntryListener != null) {
+            mAddEntryListener.onAddEntryLoaded();
+        }
+    }
+
+    // Callback to update a berry given a new entry
+    private void updateBerry(Entry entry) {
+        if (mAddEntryListener != null) {
+            mAddEntryListener.onUpdateBerry(mBerry.getId(), entry);
         }
     }
 

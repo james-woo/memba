@@ -1,6 +1,7 @@
 package com.james.memba.utils;
 
 public class KeyUtil {
+    // TODO: Get these keys in a more secure fashion
     public static final String GoogleClientId = "1009693540713-l9eim0cp3t975mf861qp26lir5lcjsb4.apps.googleusercontent.com";
     public static final String GoogleApiKey = "AIzaSyCD6e80GPE6kWFxhdr1FWgAGpelcCVMBBY";
 

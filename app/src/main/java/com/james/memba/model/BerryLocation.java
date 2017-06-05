@@ -5,6 +5,10 @@ import com.google.gson.annotations.SerializedName;
 
 public class BerryLocation {
 
+    /* Locations for berries in Memba. This data structure only holds the lat, lng, and berryId to
+     * save space, and make network less bogged. We do not need to transfer entire berry objects.
+     */
+
     @SerializedName("_id") @Expose private String mId;
     @SerializedName("location") @Expose private Location mLocation;
 

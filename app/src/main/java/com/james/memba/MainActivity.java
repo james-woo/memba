@@ -4,13 +4,9 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.IntentSender;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.location.Location;
-import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -74,11 +70,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
         ActivityCompat.OnRequestPermissionsResultCallback,
         PermissionUtils.PermissionResultCallback {
 
-    private final static String TAG = "MAIN_ACTIVITY";
-    private final static int PLAY_SERVICES_REQUEST = 1000;
     private final static int REQUEST_CHECK_SETTINGS = 2000;
-
-    private GoogleApiClient mGoogleApiClient;
 
     // Fragments
     private HomeFragment mHomeFragment;
@@ -90,31 +82,33 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
     private ImageButton mHomeButton;
     private ImageButton mAddButton;
     private ImageButton mMapButton;
-
     private enum Navbar {HOME, ADD, CREATE, MAP}
     private Navbar mCurrentPage = Navbar.HOME;
     private Navbar mLastPage = Navbar.HOME;
 
+    // Clients
+    private GoogleApiClient mGoogleApiClient;
     private MembaClient mMembaClient;
     private ImgurClient mImgurClient;
 
+    // Data
     private ArrayList<String> permissions = new ArrayList<>();
     private PermissionUtils permissionUtils;
     private boolean mIsPermissionGranted;
-
     private Account mAccount;
-
     private Location mLastLocation;
     private LocationRequest mLocationRequest;
 
+    // Callbacks
+    // When account information has been retrieved (or not), update the interface
     private Callback mGetAccountCB = new Callback() {
         @Override
-        public void onFailure(final Call call, IOException e) {
+        public void onFailure(@NonNull final Call call, @NonNull IOException e) {
             // Error
         }
 
         @Override
-        public void onResponse(Call call, final Response response) throws java.io.IOException {
+        public void onResponse(@NonNull Call call, @NonNull final Response response) throws java.io.IOException {
             String data = response.body().string();
 
             try {
@@ -138,15 +132,15 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
             }
         }
     };
-
+    // When account berries have been retrieved, update the home page
     private Callback mGetAccountBerriesCB = new Callback() {
         @Override
-        public void onFailure(Call call, IOException e) {
+        public void onFailure(@NonNull Call call, @NonNull IOException e) {
 
         }
 
         @Override
-        public void onResponse(Call call, Response response) throws IOException {
+        public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
             final String data = response.body().string();
 
             try {
@@ -177,15 +171,15 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
             }
         }
     };
-
+    // When a berry has been retrieved, show the user in a dialogfragment
     private Callback getBerryCB = new Callback() {
         @Override
-        public void onFailure(Call call, IOException e) {
+        public void onFailure(@NonNull Call call, @NonNull IOException e) {
 
         }
 
         @Override
-        public void onResponse(Call call, Response response) throws IOException {
+        public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
             final String data = response.body().string();
 
             try {
@@ -212,15 +206,15 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
             }
         }
     };
-
+    // When all berries have been retrieved, show them on the map
     private Callback getBerriesCB = new Callback() {
         @Override
-        public void onFailure(Call call, IOException e) {
+        public void onFailure(@NonNull Call call, @NonNull IOException e) {
 
         }
 
         @Override
-        public void onResponse(Call call, Response response) throws IOException {
+        public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
             final String data = response.body().string();
 
             try {
@@ -244,27 +238,27 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
             }
         }
     };
-
+    // When a berry has been created, retrieve the account berries to show them on home page
     private Callback createBerryCB = new Callback() {
         @Override
-        public void onFailure(Call call, IOException e) {
+        public void onFailure(@NonNull Call call, @NonNull IOException e) {
 
         }
 
         @Override
-        public void onResponse(Call call, Response response) throws IOException {
+        public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
             mMembaClient.getAccountBerries(mAccount, mGetAccountBerriesCB);
         }
     };
-
+    // When a berry has been updated, retrieve the account berries to show them on home page
     private Callback updateBerryCB = new Callback() {
         @Override
-        public void onFailure(Call call, IOException e) {
+        public void onFailure(@NonNull Call call, @NonNull IOException e) {
 
         }
 
         @Override
-        public void onResponse(Call call, Response response) throws IOException {
+        public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
             mMembaClient.getAccountBerries(mAccount, mGetAccountBerriesCB);
         }
     };
@@ -300,11 +294,12 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
         // Synchronized
         googleAPISetup();
 
-        String email = getIntent().getStringExtra("SIGNIN_EMAIL");
+        // Get account information from Google+
+        //String email = getIntent().getStringExtra("SIGNIN_EMAIL");
         String userId = getIntent().getStringExtra("SIGNIN_ACCOUNTID");
-        String token = getIntent().getStringExtra("SIGNIN_IDTOKEN");
+        //String token = getIntent().getStringExtra("SIGNIN_IDTOKEN");
 
-        // Asynchronous callbacks
+        // Get account details
         mMembaClient.getAccount(userId, mGetAccountCB);
     }
 
@@ -317,15 +312,14 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
 
         mGoogleApiClient.connect();
 
+        // Get current location, needs to have high accuracy or it won't work
         mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(10000);
         mLocationRequest.setFastestInterval(5000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
+        // Ask user for permissions
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(mLocationRequest);
-
         PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient, builder.build());
-
         result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
             @Override
             public void onResult(@NonNull LocationSettingsResult locationSettingsResult) {
@@ -352,6 +346,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
         });
     }
 
+    // Retrieves last known location as long as user has allowed locations
     private void getLocation() {
         if (mIsPermissionGranted) {
             try {
@@ -403,6 +398,8 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
         FragmentTransaction ft = fm.beginTransaction();
         mLastPage = mCurrentPage;
 
+        // Destroy the AddEntry fragment when user is not using it anymore (pressed back or switched
+        // tabs)
         if (n != Navbar.ADD && mAddEntryFragment != null) {
             getFragmentManager().beginTransaction().detach(mAddEntryFragment).commit();
             mAddEntryFragment = null;
@@ -564,22 +561,27 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
         }
     }
 
+    // Callback for when home fragment has loaded
     @Override
     public void onHomeLoaded() {
 
     }
 
+    // Callback for when "ADD" was pressed in AddEntry fragment
+    // Switches page to AddEntry, shows "ADD" as the menu option
     @Override
     public void onAddEntryTo(Berry berry) {
         mAddEntryFragment = AddEntryFragment.newInstance(berry);
         switchPage(Navbar.ADD);
     }
 
+    // Callback for when add entry fragment has loaded
     @Override
     public void onAddEntryLoaded() {
 
     }
 
+    // Callback for when create berry fragment has loaded
     @Override
     public void onCreateBerryLoaded() {
         getLocation();
@@ -587,6 +589,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
         mCreateBerryFragment.showBerryHeader(mAccount.getUsername(), location);
     }
 
+    // Callback for when "CREATE" was pressed in Create fragment
     @Override
     public void onCreateBerry(final Berry berry) {
         berry.setUserId(mAccount.getUserId());
@@ -601,15 +604,17 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
                 public void run() {
                     entry.setImage(mImgurClient.postImage(image));
                     berry.getEntries().set(0, entry);
-                    mMembaClient.createBerry(berry, updateBerryCB);
+                    mMembaClient.createBerry(berry, createBerryCB);
                 }
             }).start();
         } else {
-            mMembaClient.createBerry(berry, updateBerryCB);
+            mMembaClient.createBerry(berry, createBerryCB);
         }
         switchPage(Navbar.HOME);
     }
 
+    // Callback for when "ADD" was pressed in the AddEntry fragment
+    // Attempts to upload an image if there is one, and updates the database
     @Override
     public void onUpdateBerry(final String berryId, final Entry entry) {
         if (entry.getImage() != null) {
@@ -628,17 +633,21 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.Home
         switchPage(Navbar.HOME);
     }
 
+    // Callback for when the map fragment has loaded
+    // Gets the berry locations and updates the fragment
     @Override
     public void onViewMapLoaded() {
         mViewMapFragment.updateLocation(mLastLocation);
         mMembaClient.getBerries(getBerriesCB);
     }
 
+    // Callback for when a berry on the map was clicked, shows the berry in a dialog fragment
     @Override
     public void onMarkerClicked(String berryId) {
         mMembaClient.getBerry(berryId, getBerryCB);
     }
 
+    // Callback for when "My Location" was clicked, updates the current location and moves camera
     @Override
     public void onMyLocationClicked() {
         getLocation();

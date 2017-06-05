@@ -1,9 +1,5 @@
 package com.james.memba.services;
 
-import android.graphics.Bitmap;
-import android.support.annotation.Nullable;
-
-import com.google.gson.Gson;
 import com.james.memba.utils.KeyUtil;
 
 import org.json.JSONObject;
@@ -11,9 +7,6 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 
-import okhttp3.Authenticator;
-import okhttp3.Callback;
-import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;

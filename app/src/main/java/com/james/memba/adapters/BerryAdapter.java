@@ -78,6 +78,7 @@ public class BerryAdapter extends BaseAdapter {
         TextView locationTV = (TextView) rowView.findViewById(R.id.location);
         locationTV.setText(LocationUtil.getAddress(mContext, berry.getLocation()));
 
+        // Create a layout to insert entries (a "listview" within a listview)
         if (inflater != null) {
             LinearLayout entryLL = (LinearLayout) rowView.findViewById(R.id.entry_list);
             insertEntries(entryLL, inflater, viewGroup, berry.getEntries());
@@ -86,6 +87,7 @@ public class BerryAdapter extends BaseAdapter {
         TextView dateTV = (TextView) rowView.findViewById(R.id.date);
         dateTV.setText(DateUtil.longToDate(Long.parseLong(berry.getUpdateDate())));
 
+        // If a user clicks the add button, let the main activity know to handle it
         TextView addTV = (TextView) rowView.findViewById(R.id.add);
         addTV.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -129,5 +131,4 @@ public class BerryAdapter extends BaseAdapter {
     public interface BerryAdapterListener {
         void onAddClicked(int position);
     }
-
 }

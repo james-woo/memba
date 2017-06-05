@@ -74,31 +74,31 @@ public class HomeFragment extends Fragment {
         super.onResume();
     }
 
+    // When main activity fetches all berries for account, this gets called
     public void showBerries(ArrayList<Berry> berries) {
         mListAdapter.replaceData(berries);
         mNoBerriesView.setVisibility(View.GONE);
         mBerryList.setVisibility(View.VISIBLE);
     }
 
+    // When main activity cant retrieve any berries for account, this gets called
     public void showNoBerries() {
         mBerryList.setVisibility(View.GONE);
         mNoBerriesView.setVisibility(View.VISIBLE);
     }
 
+    // Callback to let main activity know this fragment is done loading
     public void homeLoaded() {
         if (mHomeListener != null) {
             mHomeListener.onHomeLoaded();
         }
     }
 
+    // Callback when "ADD" is clicked
     public void addEntryTo(Berry berry) {
         if (mHomeListener != null) {
             mHomeListener.onAddEntryTo(berry);
         }
-    }
-
-    public boolean isActive() {
-        return isAdded();
     }
 
     @Override
